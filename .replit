@@ -39,5 +39,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash web_workflow.sh"
+args = "cd mikk-mmc-web && dotnet run --urls=http://0.0.0.0:5000"
 waitForPort = 5000

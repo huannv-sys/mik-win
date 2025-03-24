@@ -278,14 +278,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Nhập tên file cấu hình cần khôi phục.</p>
+                <p>Nhập tên file cấu hình để khôi phục.</p>
                 <div class="form-group">
                     <label for="restoreFilename">Tên file</label>
-                    <input type="text" class="form-control" id="restoreFilename" required>
+                    <input type="text" class="form-control" id="restoreFilename" placeholder="backup_20230324.rsc">
                 </div>
-                <div class="alert alert-warning mt-3">
-                    <i class="bi bi-exclamation-triangle"></i> Cảnh báo: Khôi phục cấu hình sẽ ghi đè lên cấu hình hiện tại và có thể làm mất kết nối hiện tại.
-                </div>
+                <p class="text-danger mt-3">Lưu ý: Router sẽ khởi động lại sau khi khôi phục cấu hình và tất cả kết nối mạng hiện tại sẽ bị ngắt.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -298,124 +296,118 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Format các giá trị
-            function updateFormattedValues() {
-                // Format uptime
-                var uptimeSeconds = parseInt($('#uptime').data('uptime'));
-                $('#uptime').text(formatUptime(uptimeSeconds));
+            // Format bytes
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
                 
-                // Format memory values
-                var memoryUsed = parseInt($('#memory-used').data('bytes'));
-                var memoryTotal = parseInt($('#memory-total').data('bytes'));
-                $('#memory-used').text(formatBytes(memoryUsed, 1));
-                $('#memory-total').text(formatBytes(memoryTotal, 1));
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
                 
-                // Format hdd values
-                var hddUsed = parseInt($('#hdd-used').data('bytes'));
-                var hddTotal = parseInt($('#hdd-total').data('bytes'));
-                $('#hdd-used').text(formatBytes(hddUsed, 1));
-                $('#hdd-total').text(formatBytes(hddTotal, 1));
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
             }
             
-            // Cập nhật các giá trị ngay khi trang tải xong
-            updateFormattedValues();
+            // Format uptime
+            function formatUptime(seconds) {
+                const days = Math.floor(seconds / 86400);
+                const hours = Math.floor((seconds % 86400) / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                
+                let result = '';
+                if (days > 0) result += days + ' ngày ';
+                if (hours > 0 || days > 0) result += hours + ' giờ ';
+                result += minutes + ' phút';
+                
+                return result;
+            }
             
-            // Nút làm mới
+            // Format bộ nhớ và ổ đĩa
+            $('#memory-used').text(formatBytes(parseFloat($('#memory-used').data('bytes'))));
+            $('#memory-total').text(formatBytes(parseFloat($('#memory-total').data('bytes'))));
+            $('#hdd-used').text(formatBytes(parseFloat($('#hdd-used').data('bytes'))));
+            $('#hdd-total').text(formatBytes(parseFloat($('#hdd-total').data('bytes'))));
+            
+            // Format uptime
+            $('#uptime').text(formatUptime(parseInt($('#uptime').data('uptime'))));
+            
+            // Làm mới trang
             $('#refreshButton').click(function() {
                 location.reload();
             });
             
-            // Nút khởi động lại
+            // Xử lý sự kiện khởi động lại
             $('#rebootButton').click(function() {
                 $('#rebootModal').modal('show');
             });
             
-            // Xác nhận khởi động lại
             $('#confirmReboot').click(function() {
-                toggleLoading(true);
-                
                 $.ajax({
                     url: '/api/router/reboot',
-                    method: 'POST',
-                    success: function(data) {
+                    type: 'POST',
+                    success: function(response) {
                         $('#rebootModal').modal('hide');
-                        showNotification('Đã gửi lệnh khởi động lại Router thành công. Router sẽ khởi động lại trong vài giây.', 'success');
-                        setTimeout(function() {
-                            showNotification('Đang chờ Router khởi động lại...', 'info');
-                        }, 3000);
+                        alert('Đã gửi lệnh khởi động lại Router. Kết nối sẽ bị ngắt trong giây lát.');
                         setTimeout(function() {
                             location.reload();
-                        }, 30000);
+                        }, 5000);
                     },
-                    error: function(error) {
+                    error: function(xhr) {
                         $('#rebootModal').modal('hide');
-                        showNotification('Lỗi khi khởi động lại Router: ' + error.responseJSON.error, 'error');
-                    },
-                    complete: function() {
-                        toggleLoading(false);
+                        alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Không thể khởi động lại Router'));
                     }
                 });
             });
             
-            // Nút sao lưu
+            // Xử lý sự kiện sao lưu
             $('#backupButton').click(function() {
                 $('#backupModal').modal('show');
             });
             
-            // Xác nhận sao lưu
             $('#confirmBackup').click(function() {
-                var filename = $('#backupFilename').val();
-                toggleLoading(true);
+                const filename = $('#backupFilename').val();
                 
                 $.ajax({
                     url: '/api/router/backup',
-                    method: 'POST',
-                    data: { filename: filename },
-                    success: function(data) {
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ filename: filename }),
+                    success: function(response) {
                         $('#backupModal').modal('hide');
-                        showNotification('Sao lưu cấu hình thành công: ' + data.message, 'success');
+                        alert('Đã sao lưu cấu hình thành công: ' + response.message);
                     },
-                    error: function(error) {
+                    error: function(xhr) {
                         $('#backupModal').modal('hide');
-                        showNotification('Lỗi khi sao lưu cấu hình: ' + error.responseJSON.error, 'error');
-                    },
-                    complete: function() {
-                        toggleLoading(false);
+                        alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Không thể sao lưu cấu hình'));
                     }
                 });
             });
             
-            // Xác nhận khôi phục
+            // Xử lý sự kiện khôi phục
             $('#confirmRestore').click(function() {
-                var filename = $('#restoreFilename').val();
+                const filename = $('#restoreFilename').val();
                 
                 if (!filename) {
-                    showNotification('Vui lòng nhập tên file cấu hình', 'warning');
+                    alert('Vui lòng nhập tên file cấu hình');
                     return;
                 }
                 
-                toggleLoading(true);
-                
                 $.ajax({
                     url: '/api/router/restore',
-                    method: 'POST',
-                    data: { filename: filename },
-                    success: function(data) {
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ filename: filename }),
+                    success: function(response) {
                         $('#restoreModal').modal('hide');
-                        showNotification('Khôi phục cấu hình thành công: ' + data.message, 'success');
-                        setTimeout(function() {
-                            showNotification('Router đang áp dụng cấu hình mới...', 'info');
-                        }, 3000);
+                        alert('Đã gửi lệnh khôi phục cấu hình. Router sẽ khởi động lại sau khi hoàn thành.');
                         setTimeout(function() {
                             location.reload();
-                        }, 20000);
+                        }, 10000);
                     },
-                    error: function(error) {
+                    error: function(xhr) {
                         $('#restoreModal').modal('hide');
-                        showNotification('Lỗi khi khôi phục cấu hình: ' + error.responseJSON.error, 'error');
-                    },
-                    complete: function() {
-                        toggleLoading(false);
+                        alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Không thể khôi phục cấu hình'));
                     }
                 });
             });

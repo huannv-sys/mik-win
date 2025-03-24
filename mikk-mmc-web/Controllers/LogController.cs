@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using mikk_mmc_web.Models;
 using mikk_mmc_web.Services;
+using mikk_mmc_web.ViewModels;
 
 namespace mikk_mmc_web.Controllers
 {
@@ -24,7 +27,7 @@ namespace mikk_mmc_web.Controllers
         }
 
         // Hiển thị danh sách logs
-        public async Task<IActionResult> Index(string topic = null, string level = null, int maxEntries = 100)
+        public async Task<IActionResult> Index(string topic = "", string level = "", int maxEntries = 100)
         {
             try
             {
@@ -54,16 +57,25 @@ namespace mikk_mmc_web.Controllers
                 {
                     logs = await _logService.GetAllLogsAsync(maxEntries);
                     ViewBag.FilterType = "all";
-                    ViewBag.FilterValue = null;
+                    ViewBag.FilterValue = "";
                 }
                 
                 // Lấy danh sách chủ đề và mức độ để hiển thị bộ lọc
                 var allLogs = await _logService.GetAllLogsAsync(1000);
                 ViewBag.Topics = allLogs.Select(l => l.Topic).Distinct().OrderBy(t => t).ToList();
-                ViewBag.Levels = allLogs.Select(l => l.LogLevel).Distinct().OrderBy(l => l).ToList();
+                ViewBag.Levels = allLogs.Select(l => l.Level).Distinct().OrderBy(l => l).ToList();
                 ViewBag.MaxEntries = maxEntries;
                 
-                return View(logs);
+                var viewModel = new LogViewModel
+                {
+                    Logs = logs,
+                    Topic = topic,
+                    Level = level,
+                    StartDate = null,
+                    EndDate = null
+                };
+                
+                return View(viewModel);
             }
             catch (Exception ex)
             {
@@ -92,11 +104,16 @@ namespace mikk_mmc_web.Controllers
                 // Lấy logs theo khoảng thời gian
                 var logs = await _logService.GetLogsByDateRangeAsync(start, end, maxEntries);
                 
-                ViewBag.StartDate = start;
-                ViewBag.EndDate = end;
-                ViewBag.MaxEntries = maxEntries;
+                var viewModel = new LogViewModel
+                {
+                    Logs = logs,
+                    Topic = "",
+                    Level = "",
+                    StartDate = start,
+                    EndDate = end
+                };
                 
-                return View(logs);
+                return View(viewModel);
             }
             catch (Exception ex)
             {
@@ -144,7 +161,7 @@ namespace mikk_mmc_web.Controllers
         }
 
         // Xuất logs
-        public async Task<IActionResult> Export(string filename = null)
+        public async Task<IActionResult> Export(string filename = "")
         {
             try
             {

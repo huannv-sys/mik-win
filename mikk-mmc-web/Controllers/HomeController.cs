@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using mikk_mmc_web.Models;
 using mikk_mmc_web.Services;
+using mikk_mmc_web.ViewModels;
 
 namespace mikk_mmc_web.Controllers
 {
@@ -37,130 +38,118 @@ namespace mikk_mmc_web.Controllers
         {
             try
             {
-                // Kiểm tra trạng thái kết nối
                 if (!_routerService.IsConnected)
                 {
-                    // Nếu chưa kết nối, hãy kết nối với thông tin mặc định để demo
-                    await _routerService.ConnectAsync(new ConnectionSettings
-                    {
-                        IpAddress = "192.168.1.1",
-                        Username = "admin",
-                        Password = "password", // Trong môi trường thực, mật khẩu này sẽ được nhập bởi người dùng
-                        Port = 22,
-                        ApiPort = "8728",
-                        ConnectionMethod = "API"
-                    });
+                    TempData["InfoMessage"] = "Vui lòng kết nối tới Router để sử dụng ứng dụng.";
+                    return RedirectToAction(nameof(Settings));
                 }
 
-                // Tạo viewmodel cho Dashboard
-                var viewModel = new DashboardViewModel();
-
-                // Lấy thông tin Router
-                viewModel.RouterInfo = await _routerService.GetRouterInfoAsync();
-
-                // Lấy thông tin tài nguyên hệ thống
-                viewModel.SystemResources = await _routerService.GetSystemResourcesAsync();
-
-                // Lấy top 5 giao diện mạng
+                var routerInfo = await _routerService.GetRouterInfoAsync();
+                var systemResources = await _routerService.GetSystemResourcesAsync();
                 var interfaces = await _interfaceService.GetAllInterfacesAsync();
-                viewModel.TopInterfaces = interfaces.Take(5).ToList();
+                var firewallRules = await _firewallService.GetAllRulesAsync();
+                var dhcpLeases = await _dhcpService.GetAllLeasesAsync();
+                var logs = await _logService.GetAllLogsAsync(10);
 
-                // Lấy các luật tường lửa gần đây nhất
-                var rules = await _firewallService.GetAllRulesAsync();
-                viewModel.RecentRules = rules.Take(5).ToList();
-
-                // Lấy các DHCP lease gần đây nhất
-                var leases = await _dhcpService.GetAllLeasesAsync();
-                viewModel.RecentLeases = leases.Take(5).ToList();
-
-                // Lấy các log gần đây nhất
-                viewModel.RecentLogs = await _logService.GetAllLogsAsync(5);
-
-                // Cập nhật thời gian
-                viewModel.LastUpdated = DateTime.Now;
+                var viewModel = new DashboardViewModel
+                {
+                    RouterInfo = routerInfo,
+                    SystemResources = systemResources,
+                    TopInterfaces = interfaces.GetRange(0, Math.Min(interfaces.Count, 3)),
+                    RecentRules = firewallRules.GetRange(0, Math.Min(firewallRules.Count, 5)),
+                    RecentLeases = dhcpLeases.GetRange(0, Math.Min(dhcpLeases.Count, 5)),
+                    RecentLogs = logs,
+                    LastUpdated = DateTime.Now
+                };
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tải trang Dashboard");
-                ViewBag.ErrorMessage = ex.Message;
+                _logger.LogError(ex, "Lỗi khi hiển thị trang Dashboard");
+                TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
                 return View(new DashboardViewModel());
             }
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
         public IActionResult Settings()
         {
-            var settings = _routerService.CurrentSettings;
-            // Không hiển thị mật khẩu
-            settings.Password = string.Empty;
-            return View(settings);
+            var viewModel = new ConnectionSettings();
+            
+            // Nếu đã kết nối, sử dụng cài đặt hiện tại
+            if (_routerService.IsConnected)
+            {
+                viewModel = _routerService.CurrentSettings;
+                ViewBag.IsConnected = true;
+            }
+            else
+            {
+                ViewBag.IsConnected = false;
+            }
+            
+            return View(viewModel);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Connect(ConnectionSettings settings)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Connect(ConnectionSettings model)
         {
+            if (!ModelState.IsValid)
+            {
+                return View("Settings", model);
+            }
+
             try
             {
-                if (ModelState.IsValid)
-                {
-                    _logger.LogInformation($"Đang kết nối tới Router tại {settings.IpAddress}");
-                    
-                    bool success = await _routerService.ConnectAsync(settings);
-                    
-                    if (success)
-                    {
-                        _logger.LogInformation("Kết nối thành công");
-                        TempData["SuccessMessage"] = "Kết nối thành công tới Router";
-                        return RedirectToAction(nameof(Index));
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Kết nối thất bại");
-                        ModelState.AddModelError("", "Không thể kết nối tới Router. Vui lòng kiểm tra thông tin đăng nhập.");
-                    }
-                }
+                // Thử kết nối tới Router
+                var success = await _routerService.ConnectAsync(model);
                 
-                return View("Settings", settings);
+                if (success)
+                {
+                    _logger.LogInformation($"Kết nối thành công tới Router {model.IpAddress}");
+                    TempData["SuccessMessage"] = "Kết nối thành công tới Router!";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    _logger.LogWarning($"Kết nối thất bại tới Router {model.IpAddress}");
+                    ModelState.AddModelError(string.Empty, "Kết nối thất bại. Vui lòng kiểm tra thông tin kết nối và thử lại.");
+                    return View("Settings", model);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi kết nối");
-                ModelState.AddModelError("", $"Lỗi: {ex.Message}");
-                return View("Settings", settings);
+                _logger.LogError(ex, $"Lỗi khi kết nối tới Router {model.IpAddress}");
+                ModelState.AddModelError(string.Empty, $"Lỗi: {ex.Message}");
+                return View("Settings", model);
             }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Disconnect()
         {
             try
             {
-                _logger.LogInformation("Đang ngắt kết nối từ Router");
-                
-                bool success = await _routerService.DisconnectAsync();
+                // Ngắt kết nối
+                var success = await _routerService.DisconnectAsync();
                 
                 if (success)
                 {
-                    _logger.LogInformation("Ngắt kết nối thành công");
-                    TempData["SuccessMessage"] = "Đã ngắt kết nối từ Router";
+                    _logger.LogInformation("Ngắt kết nối từ Router thành công");
+                    TempData["InfoMessage"] = "Đã ngắt kết nối từ Router.";
                 }
                 else
                 {
-                    _logger.LogWarning("Ngắt kết nối thất bại");
-                    TempData["ErrorMessage"] = "Không thể ngắt kết nối từ Router";
+                    _logger.LogWarning("Ngắt kết nối từ Router thất bại");
+                    TempData["WarningMessage"] = "Ngắt kết nối thất bại.";
                 }
                 
                 return RedirectToAction(nameof(Settings));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi ngắt kết nối");
+                _logger.LogError(ex, "Lỗi khi ngắt kết nối từ Router");
                 TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
                 return RedirectToAction(nameof(Settings));
             }
@@ -171,11 +160,5 @@ namespace mikk_mmc_web.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-    }
-
-    public class ErrorViewModel
-    {
-        public string? RequestId { get; set; }
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }

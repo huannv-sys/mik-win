@@ -1,34 +1,45 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using mikk_mmc_web.Services;
+using mikk_mmc_web.Services.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Thêm các dịch vụ vào container.
 builder.Services.AddControllersWithViews();
 
-// Register services
-builder.Services.AddSingleton<IRouterService, RouterService>();
-builder.Services.AddSingleton<IInterfaceService, InterfaceService>();
-builder.Services.AddSingleton<IFirewallService, FirewallService>();
-builder.Services.AddSingleton<IDhcpService, DhcpService>();
-builder.Services.AddSingleton<ILogService, LogService>();
+// Đăng ký các dịch vụ
+builder.Services.AddSingleton<IRouterService, RouterServiceDemo>();
+builder.Services.AddSingleton<IInterfaceService, InterfaceServiceDemo>();
+builder.Services.AddSingleton<IFirewallService, FirewallServiceDemo>();
+builder.Services.AddSingleton<IDhcpService, DhcpServiceDemo>();
+builder.Services.AddSingleton<ILogService, LogServiceDemo>();
 
-// Add CORS policy
-builder.Services.AddCors(options =>
+// Tạo lớp Router Demo được kết nối sẵn
+builder.Services.AddSingleton<RouterServiceDemo>(provider =>
 {
-    options.AddPolicy("AllowAll",
-        builder => builder
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader());
+    var service = new RouterServiceDemo(provider.GetRequiredService<ILogger<RouterServiceDemo>>());
+    // Kết nối tự động với cài đặt demo
+    service.ConnectAsync(new mikk_mmc_web.Models.ConnectionSettings
+    {
+        IpAddress = "192.168.1.1",
+        Username = "admin",
+        Password = "demo-password",
+        Protocol = "API"
+    }).Wait();
+    return service;
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Cấu hình HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios.
+    // Mặc định HSTS là 30 ngày. 
     app.UseHsts();
 }
 
@@ -36,16 +47,11 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseCors("AllowAll");
 
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// Thông báo khi ứng dụng khởi động
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("MikroTik Monitor Web Application started");
 
 app.Run();
