@@ -1,4 +1,5 @@
 using mikk_mmc_web.Models;
+using mikk_mmc_web.Models.Shared;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

@@ -42,12 +42,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9TZXR0aW5ncy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/runner/workspace/mikk-mmc-web/Views/Router/Connect.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm91dGVyL0Nvbm5lY3QuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/runner/workspace/mikk-mmc-web/Views/Router/Status.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm91dGVyL1N0YXR1cy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/mikk-mmc-web/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/mikk-mmc-web/Views/Shared/NotConnected.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL05vdENvbm5lY3RlZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/mikk-mmc-web/Views/Shared/_Layout.cshtml]

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using mikk_mmc.Models;
+using mikk_mmc_web.Models;
+using mikk_mmc_web.Models.Shared;
 using mikk_mmc_web.Services;
 using mikk_mmc_web.ViewModels;
 using System;

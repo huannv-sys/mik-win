@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using mikk_mmc_web.Models;
+using mikk_mmc_web.Models.Shared;
 
 namespace mikk_mmc_web.ViewModels
 {

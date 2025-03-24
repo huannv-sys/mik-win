@@ -25,10 +25,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Minimal Web App"
+args = "ASP.NET Core Web App"
 
 [[workflows.workflow]]
-name = "Minimal Web App"
+name = "ASP.NET Core Web App"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -39,7 +39,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash minimal_web_app.sh"
+args = "./run_web_app.sh"
 waitForPort = 5000
 
 [[ports]]

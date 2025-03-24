@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("mikk-mmc-web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+55031f5528af1d8f52e5f56a9173c270d1f51616")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3fcac0e77145583cae43e4f2c5fda10ee8ec8a80")]
 [assembly: System.Reflection.AssemblyProductAttribute("mikk-mmc-web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("mikk-mmc-web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

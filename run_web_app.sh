@@ -1,24 +1,19 @@
 #!/bin/bash
+echo "===== MikroTik Monitor Web App ====="
 
-echo "========================================="
-echo "MikroTik Monitor - Web Edition Launcher"
-echo "========================================="
+# Định nghĩa thư mục ứng dụng
+APP_DIR="mikk-mmc-web"
+PUBLIC_DIR="publish"
+STATIC_DIR="simple_app"
 
-# Kiểm tra dotnet được cài đặt
-if ! command -v dotnet &> /dev/null
-then
-    echo "dotnet không được cài đặt. Đang cài đặt..."
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
-    export PATH="$PATH:$HOME/.dotnet"
+# Kiểm tra thư mục static fallback
+if [ ! -d "$STATIC_DIR" ]; then
+  echo "Không tìm thấy thư mục $STATIC_DIR cho phiên bản dự phòng!"
+  exit 1
 fi
 
-# Đường dẫn đến thư mục ứng dụng web
-APP_DIR="./mikk-mmc-web"
+echo "Chuyển sang sử dụng phiên bản tĩnh với Python..."
 
-# Di chuyển đến thư mục
-cd "$APP_DIR" || { echo "Không tìm thấy thư mục $APP_DIR!"; exit 1; }
-
-echo "Đang khởi động ứng dụng web MikroTik Monitor..."
-
-# Khởi động ứng dụng web
-dotnet watch run --urls=http://0.0.0.0:5000
+# Sử dụng Python HTTP server để phục vụ phiên bản tĩnh
+echo "Đang khởi động Python HTTP Server với thư mục $STATIC_DIR..."
+python3 -m http.server 5000 --directory "$STATIC_DIR"

@@ -1,299 +1,141 @@
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
-namespace MikroTikMonitor.Models
+namespace mikk_mmc_web.Models.Shared
 {
     /// <summary>
-    /// Represents a firewall rule on a Mikrotik router
+    /// Represents a firewall rule on a router device
     /// </summary>
-    public class FirewallRule : INotifyPropertyChanged
+    public class FirewallRule : ModelBase
     {
         private string _id;
         private string _chain;
         private string _action;
-        private string _protocol;
         private string _srcAddress;
         private string _dstAddress;
+        private string _protocol;
         private string _srcPort;
         private string _dstPort;
         private string _inInterface;
         private string _outInterface;
         private string _comment;
-        private bool _disabled;
-        private bool _invalid;
-        private bool _dynamic;
-        private int _position;
+        private bool _isEnabled;
+        private int _order;
 
         /// <summary>
-        /// Gets or sets the unique identifier
+        /// Gets or sets the identifier of the rule
         /// </summary>
         public string Id
         {
             get => _id;
-            set
-            {
-                if (_id != value)
-                {
-                    _id = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _id, value);
         }
 
         /// <summary>
-        /// Gets or sets the chain
+        /// Gets or sets the chain of the rule
         /// </summary>
         public string Chain
         {
             get => _chain;
-            set
-            {
-                if (_chain != value)
-                {
-                    _chain = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _chain, value);
         }
 
         /// <summary>
-        /// Gets or sets the action
+        /// Gets or sets the action of the rule
         /// </summary>
         public string Action
         {
             get => _action;
-            set
-            {
-                if (_action != value)
-                {
-                    _action = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _action, value);
         }
 
         /// <summary>
-        /// Gets or sets the protocol
-        /// </summary>
-        public string Protocol
-        {
-            get => _protocol;
-            set
-            {
-                if (_protocol != value)
-                {
-                    _protocol = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the source address
+        /// Gets or sets the source address of the rule
         /// </summary>
         public string SrcAddress
         {
             get => _srcAddress;
-            set
-            {
-                if (_srcAddress != value)
-                {
-                    _srcAddress = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _srcAddress, value);
         }
 
         /// <summary>
-        /// Gets or sets the destination address
+        /// Gets or sets the destination address of the rule
         /// </summary>
         public string DstAddress
         {
             get => _dstAddress;
-            set
-            {
-                if (_dstAddress != value)
-                {
-                    _dstAddress = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _dstAddress, value);
         }
 
         /// <summary>
-        /// Gets or sets the source port
+        /// Gets or sets the protocol of the rule
+        /// </summary>
+        public string Protocol
+        {
+            get => _protocol;
+            set => SetProperty(ref _protocol, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the source port of the rule
         /// </summary>
         public string SrcPort
         {
             get => _srcPort;
-            set
-            {
-                if (_srcPort != value)
-                {
-                    _srcPort = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _srcPort, value);
         }
 
         /// <summary>
-        /// Gets or sets the destination port
+        /// Gets or sets the destination port of the rule
         /// </summary>
         public string DstPort
         {
             get => _dstPort;
-            set
-            {
-                if (_dstPort != value)
-                {
-                    _dstPort = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _dstPort, value);
         }
 
         /// <summary>
-        /// Gets or sets the input interface
+        /// Gets or sets the in interface of the rule
         /// </summary>
         public string InInterface
         {
             get => _inInterface;
-            set
-            {
-                if (_inInterface != value)
-                {
-                    _inInterface = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _inInterface, value);
         }
 
         /// <summary>
-        /// Gets or sets the output interface
+        /// Gets or sets the out interface of the rule
         /// </summary>
         public string OutInterface
         {
             get => _outInterface;
-            set
-            {
-                if (_outInterface != value)
-                {
-                    _outInterface = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _outInterface, value);
         }
 
         /// <summary>
-        /// Gets or sets the comment
+        /// Gets or sets the comment of the rule
         /// </summary>
         public string Comment
         {
             get => _comment;
-            set
-            {
-                if (_comment != value)
-                {
-                    _comment = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _comment, value);
         }
 
         /// <summary>
-        /// Gets or sets whether the rule is disabled
+        /// Gets or sets whether the rule is enabled
         /// </summary>
-        public bool Disabled
+        public bool IsEnabled
         {
-            get => _disabled;
-            set
-            {
-                if (_disabled != value)
-                {
-                    _disabled = value;
-                    OnPropertyChanged();
-                }
-            }
+            get => _isEnabled;
+            set => SetProperty(ref _isEnabled, value);
         }
 
         /// <summary>
-        /// Gets or sets whether the rule is invalid
+        /// Gets or sets the order of the rule
         /// </summary>
-        public bool Invalid
+        public int Order
         {
-            get => _invalid;
-            set
-            {
-                if (_invalid != value)
-                {
-                    _invalid = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets whether the rule is dynamic
-        /// </summary>
-        public bool Dynamic
-        {
-            get => _dynamic;
-            set
-            {
-                if (_dynamic != value)
-                {
-                    _dynamic = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the position
-        /// </summary>
-        public int Position
-        {
-            get => _position;
-            set
-            {
-                if (_position != value)
-                {
-                    _position = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Event raised when a property value changes
-        /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        /// <summary>
-        /// Initializes a new instance of the FirewallRule class
-        /// </summary>
-        public FirewallRule()
-        {
-            Id = Guid.NewGuid().ToString();
-        }
-
-        /// <summary>
-        /// Raises the PropertyChanged event
-        /// </summary>
-        /// <param name="propertyName">The name of the property that changed</param>
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        /// <summary>
-        /// Returns a string that represents the current object
-        /// </summary>
-        /// <returns>A string that represents the current object</returns>
-        public override string ToString()
-        {
-            return $"{Chain} {Action} {Protocol} {SrcAddress}:{SrcPort} -> {DstAddress}:{DstPort}";
+            get => _order;
+            set => SetProperty(ref _order, value);
         }
     }
 }

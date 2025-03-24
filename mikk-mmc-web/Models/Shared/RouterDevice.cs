@@ -1,8 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
 using mikk_mmc_web.Models; // Sử dụng namespace của web app cho ConnectionStatus
+using mikk_mmc_web.Models.Shared;
 
-namespace MikroTikMonitor.Models
+namespace mikk_mmc_web.Models.Shared
 {
     /// <summary>
     /// Represents a Mikrotik router device

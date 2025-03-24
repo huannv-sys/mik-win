@@ -1,4 +1,5 @@
 using mikk_mmc_web.Models;
+using mikk_mmc_web.Models.Shared;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -103,14 +104,19 @@ namespace mikk_mmc_web.Services.Demo
             // Tạo giá trị ngẫu nhiên nhưng thực tế
             var cpuLoad = _random.Next(10, 35); // 10-35%
             
-            var systemResources = new SystemResources
+            var systemResources = new SystemResourcesExtended
             {
-                CpuLoad = cpuLoad,
+                CpuUsage = cpuLoad,
                 MemoryUsed = 409.6 * 1024 * 1024, // 409.6 MB
                 MemoryTotal = 1024 * 1024 * 1024, // 1 GB
                 HddUsed = 60 * 1024 * 1024, // 60 MB
                 HddTotal = 200 * 1024 * 1024, // 200 MB
+                MemoryUsage = 40, // 40%
+                DiskUsage = 30, // 30%
                 Temperature = 41 + _random.Next(0, 3), // 41-44°C
+                Uptime = 924168, // Giống với UptimeSeconds trong RouterInfo
+                ActiveSessions = _random.Next(2, 10),
+                Version = "RouterOS v7.10",
                 LastUpdated = DateTime.Now
             };
             

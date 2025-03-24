@@ -1,26 +1,265 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MikroTik Monitor Web</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; }
-        .status { padding: 15px; margin-top: 20px; border-radius: 5px; background-color: #ecf0f1; }
-        .success { color: #27ae60; }
-        .error { color: #e74c3c; }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>MikroTik Monitor - Web Version</h1>
-        <div class="status">
-            <h2>Trạng thái kết nối</h2>
-            <p><b>Máy chủ web:</b> <span class="success">Đang chạy</span></p>
-            <p><b>Demo Mode:</b> <span class="success">Hoạt động</span></p>
-            <p><b>Thông tin:</b> Ứng dụng đơn giản này xác nhận rằng máy chủ web có thể chạy trên Replit.</p>
-            <p>Khi cài đặt thành công, bạn sẽ thấy trang này thay vì ứng dụng ASP.NET MVC đầy đủ.</p>
+    <header class="header">
+        <div class="container">
+            <div class="logo">MikroTik Monitor Web</div>
         </div>
-    </div>
+    </header>
+    
+    <nav class="nav">
+        <div class="container">
+            <a href="#" class="nav-item active">Trang chủ</a>
+            <a href="#" class="nav-item">Các thiết bị</a>
+            <a href="#" class="nav-item">Mạng</a>
+            <a href="#" class="nav-item">Tường lửa</a>
+            <a href="#" class="nav-item">DHCP</a>
+            <a href="#" class="nav-item">Logs</a>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header">
+                <h2 class="card-title">Thông tin thiết bị</h2>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-refresh">Làm mới</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <p><strong>Tên thiết bị:</strong> MikroTik Demo</p>
+                        <p><strong>Mẫu:</strong> RouterBOARD 3011</p>
+                        <p><strong>Phiên bản:</strong> RouterOS v7.10</p>
+                        <p><strong>Địa chỉ MAC:</strong> AA:BB:CC:DD:EE:FF</p>
+                    </div>
+                    <div>
+                        <p><strong>Số serial:</strong> 44G70B7777AA</p>
+                        <p><strong>Kiến trúc:</strong> arm64</p>
+                        <p><strong>Thời gian hoạt động:</strong> 10 ngày 16 giờ 42 phút</p>
+                        <p><strong>Địa chỉ IP:</strong> 192.168.1.1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Tài nguyên hệ thống</h2>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-refresh">Làm mới</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p><strong>CPU:</strong> <span id="cpu-value">25%</span></p>
+                    <div class="progress">
+                        <div id="cpu-usage" class="progress-bar progress-bar-success" style="width: 25%"></div>
+                    </div>
+                    
+                    <p><strong>Bộ nhớ:</strong> <span id="memory-value">40%</span></p>
+                    <div class="progress">
+                        <div id="memory-usage" class="progress-bar progress-bar-warning" style="width: 40%"></div>
+                    </div>
+                    
+                    <p><strong>Đĩa:</strong> <span id="disk-value">30%</span></p>
+                    <div class="progress">
+                        <div id="disk-usage" class="progress-bar progress-bar-success" style="width: 30%"></div>
+                    </div>
+                    
+                    <p><strong>Nhiệt độ:</strong> <span id="temperature-value">42°C</span></p>
+                    <p><strong>Phiên đang hoạt động:</strong> <span id="sessions-value">5</span></p>
+                    <p><strong>Cập nhật lần cuối:</strong> <span id="last-updated">10:15:30</span></p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Interface mạng</h2>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-refresh">Làm mới</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tên</th>
+                                <th>Loại</th>
+                                <th>Trạng thái</th>
+                                <th>Địa chỉ IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ether1</td>
+                                <td>ethernet</td>
+                                <td><span class="badge badge-success">Hoạt động</span></td>
+                                <td>192.168.1.1/24</td>
+                            </tr>
+                            <tr>
+                                <td>ether2</td>
+                                <td>ethernet</td>
+                                <td><span class="badge badge-success">Hoạt động</span></td>
+                                <td>10.0.0.1/24</td>
+                            </tr>
+                            <tr>
+                                <td>wlan1</td>
+                                <td>wireless</td>
+                                <td><span class="badge badge-success">Hoạt động</span></td>
+                                <td>192.168.88.1/24</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Luật tường lửa gần đây</h2>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-refresh">Làm mới</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Chain</th>
+                                <th>Action</th>
+                                <th>Src Address</th>
+                                <th>Dst Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>forward</td>
+                                <td><span class="badge badge-danger">drop</span></td>
+                                <td>0.0.0.0/0</td>
+                                <td>192.168.1.0/24</td>
+                            </tr>
+                            <tr>
+                                <td>input</td>
+                                <td><span class="badge badge-success">accept</span></td>
+                                <td>192.168.1.0/24</td>
+                                <td>0.0.0.0/0</td>
+                            </tr>
+                            <tr>
+                                <td>forward</td>
+                                <td><span class="badge badge-success">accept</span></td>
+                                <td>192.168.1.0/24</td>
+                                <td>0.0.0.0/0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">DHCP Leases</h2>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-refresh">Làm mới</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Địa chỉ MAC</th>
+                                <th>Địa chỉ IP</th>
+                                <th>Host</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>AA:BB:CC:11:22:33</td>
+                                <td>192.168.1.100</td>
+                                <td>laptop-user</td>
+                                <td><span class="badge badge-success">active</span></td>
+                            </tr>
+                            <tr>
+                                <td>DD:EE:FF:44:55:66</td>
+                                <td>192.168.1.101</td>
+                                <td>desktop-user</td>
+                                <td><span class="badge badge-success">active</span></td>
+                            </tr>
+                            <tr>
+                                <td>11:22:33:44:55:66</td>
+                                <td>192.168.1.102</td>
+                                <td>smartphone</td>
+                                <td><span class="badge badge-success">active</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Logs gần đây</h2>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-refresh">Làm mới</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Loại</th>
+                            <th>Thông điệp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>10:15:30</td>
+                            <td><span class="badge badge-info">info</span></td>
+                            <td>interface ether1: link up (speed 1Gbps, full duplex)</td>
+                        </tr>
+                        <tr>
+                            <td>10:14:22</td>
+                            <td><span class="badge badge-warning">warning</span></td>
+                            <td>wireless: signal strength dropped on wlan1</td>
+                        </tr>
+                        <tr>
+                            <td>10:12:15</td>
+                            <td><span class="badge badge-info">info</span></td>
+                            <td>dhcp: leased 192.168.1.100 to AA:BB:CC:11:22:33</td>
+                        </tr>
+                        <tr>
+                            <td>10:10:05</td>
+                            <td><span class="badge badge-danger">error</span></td>
+                            <td>firewall: blocked suspicious traffic from 203.0.113.1</td>
+                        </tr>
+                        <tr>
+                            <td>10:05:18</td>
+                            <td><span class="badge badge-info">info</span></td>
+                            <td>system: router has been started after upgrade</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 MikroTik Monitor. Phiên bản Demo</p>
+        </div>
+    </footer>
+    
+    <script src="js/demo.js"></script>
 </body>
 </html>
