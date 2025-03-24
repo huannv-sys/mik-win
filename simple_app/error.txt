@@ -1,0 +1,2 @@
+===== LỖI =====
+Không thể khởi động máy chủ web vì không tìm thấy Python hoặc Node.js.

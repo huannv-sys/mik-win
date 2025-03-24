@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using mikk_mmc_web.Models; // Sử dụng namespace của web app cho ConnectionStatus
 
 namespace MikroTikMonitor.Models
 {

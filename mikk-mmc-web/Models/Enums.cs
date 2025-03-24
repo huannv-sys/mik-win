@@ -1,11 +1,3 @@
-#!/bin/bash
-
-echo "===== Công cụ sửa lỗi và triển khai MikroTik Monitor ====="
-
-# 1. Cập nhật định nghĩa Enums trong dự án web (mikk-mmc-web)
-echo "1. Cập nhật định nghĩa Enums.cs trong mikk-mmc-web..."
-
-cat > mikk-mmc-web/Models/Enums.cs << 'ENUM_EOL'
 namespace mikk_mmc_web.Models
 {
     /// <summary>
@@ -96,33 +88,3 @@ namespace mikk_mmc_web.Models
         Failed = 3
     }
 }
-ENUM_EOL
-
-echo "✓ Đã cập nhật file mikk-mmc-web/Models/Enums.cs"
-
-# 2. Thêm tham chiếu vào RouterDevice.cs
-echo "2. Thêm tham chiếu ConnectionStatus vào RouterDevice.cs..."
-
-sed -i '1s/^/using mikk_mmc_web.Models; \/\/ Thêm cho ConnectionStatus\n/' mikk-mmc/Models/RouterDevice.cs
-
-echo "✓ Đã thêm tham chiếu vào RouterDevice.cs"
-
-# 3. Chỉnh sửa file ConnectionSettings.cs trong mikk-mmc-web (nếu cần)
-echo "3. Kiểm tra và cập nhật ConnectionSettings.cs..."
-
-# 4. Build và run dự án
-echo "4. Build dự án mikk-mmc-web..."
-
-cd mikk-mmc-web
-
-echo "# Đang build project..."
-dotnet build --configuration Release
-
-if [ $? -eq 0 ]; then
-  echo "✓ Đã build thành công!"
-  echo "Dự án đã sẵn sàng để chạy. Hãy sử dụng workflow để khởi động."
-else
-  echo "❌ Build thất bại. Kiểm tra lỗi ở trên."
-fi
-
-echo "===== Hoàn tất quá trình sửa lỗi và triển khai ====="

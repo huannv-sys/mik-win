@@ -1,6 +1,6 @@
 run = "bash run_web_app.sh"
 language = "dotnet"
-modules = ["dotnet-8.0"]
+modules = ["dotnet-8.0", "python-3.11"]
 
 [nix]
 channel = "stable-23_11"
@@ -16,3 +16,32 @@ run = ["sh", "-c", "cd publish && dotnet mikk-mmc-web.dll --urls=http://0.0.0.0:
 deploymentTarget = "cloudrun"
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Minimal Web App"
+
+[[workflows.workflow]]
+name = "Minimal Web App"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash minimal_web_app.sh"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
