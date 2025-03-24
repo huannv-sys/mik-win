@@ -5,14 +5,20 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using mikk_mmc_web.Services;
 using mikk_mmc_web.Services.Demo;
+using System;
 
-// Tạo builder với cấu hình tối thiểu
 var builder = WebApplication.CreateBuilder(args);
 
-// Cấu hình logging tối thiểu để giảm sử dụng tài nguyên
+// Tối ưu cho môi trường Replit
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
+// Cấu hình cho môi trường Replit
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(10);
+});
 
 // Thêm các dịch vụ vào container
 builder.Services.AddControllersWithViews();
@@ -28,21 +34,22 @@ builder.Services.AddSingleton<ILogService, LogServiceDemo>();
 builder.Services.AddSingleton<RouterServiceDemo>(provider =>
 {
     var service = new RouterServiceDemo(provider.GetRequiredService<ILogger<RouterServiceDemo>>());
-    // Kết nối tự động với cài đặt demo
-    service.ConnectAsync(new mikk_mmc_web.Models.ConnectionSettings
+    try
     {
-        IpAddress = "192.168.1.1",
-        Username = "admin",
-        Password = "demo-password",
-        Protocol = "API"
-    }).Wait();
+        // Kết nối tự động với cài đặt demo
+        service.ConnectAsync(new mikk_mmc_web.Models.ConnectionSettings
+        {
+            IpAddress = "192.168.1.1",
+            Username = "admin",
+            Password = "demo-password",
+            Protocol = "API"
+        }).Wait();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Lỗi khi kết nối tới Router demo: {ex.Message}");
+    }
     return service;
-});
-
-// Giảm thiểu các dịch vụ không cần thiết
-builder.Services.Configure<HostOptions>(options =>
-{
-    options.ShutdownTimeout = TimeSpan.FromSeconds(10);
 });
 
 var app = builder.Build();
@@ -53,7 +60,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
 }
 
-// Bỏ UseHttpsRedirection để tránh lỗi chuyển hướng trên Replit
+// Bỏ HTTPS trên Replit
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
@@ -67,12 +74,14 @@ app.MapControllerRoute(
 // In thông báo khi ứng dụng đã sẵn sàng
 app.Lifetime.ApplicationStarted.Register(() =>
 {
+    Console.WriteLine("===== MikroTik Monitor Web =====");
     Console.WriteLine("Ứng dụng đã khởi động thành công!");
     Console.WriteLine("Truy cập: http://localhost:5000 hoặc http://0.0.0.0:5000");
 });
 
 try
 {
+    Console.WriteLine("Đang khởi động ứng dụng...");
     app.Run("http://0.0.0.0:5000");
 }
 catch (Exception ex)

@@ -1,115 +1,122 @@
-using System;
-using System.Threading.Tasks;
 using mikk_mmc_web.Models;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace mikk_mmc_web.Services.Demo
 {
-    // Triển khai Demo Router Service
     public class RouterServiceDemo : IRouterService
     {
         private readonly ILogger<RouterServiceDemo> _logger;
-        private ConnectionSettings _settings;
         private bool _isConnected;
+        private ConnectionSettings _settings;
+        private readonly Random _random = new Random();
+
+        public bool IsConnected => _isConnected;
 
         public RouterServiceDemo(ILogger<RouterServiceDemo> logger)
         {
             _logger = logger;
-            _settings = new ConnectionSettings();
-            _isConnected = false;
         }
-
-        public bool IsConnected => _isConnected;
-
-        public ConnectionSettings CurrentSettings => _settings;
 
         public async Task<bool> ConnectAsync(ConnectionSettings settings)
         {
-            _logger.LogInformation($"Kết nối tới Router tại {settings.IpAddress}");
-            await Task.Delay(1500); // Mô phỏng độ trễ
+            _logger.LogInformation("Đang kết nối đến Router {IpAddress} qua {Protocol}...", 
+                settings.IpAddress, settings.Protocol);
             
-            // Đặt cài đặt kết nối
+            // Giả lập kết nối
+            await Task.Delay(500);
+            
             _settings = settings;
             _isConnected = true;
+            
+            _logger.LogInformation("Đã kết nối thành công đến Router {IpAddress}", settings.IpAddress);
             
             return true;
         }
 
         public async Task<bool> DisconnectAsync()
         {
-            _logger.LogInformation("Ngắt kết nối từ Router");
-            await Task.Delay(500);
+            if (!_isConnected)
+                return true;
+                
+            _logger.LogInformation("Đang ngắt kết nối từ Router...");
+            
+            // Giả lập ngắt kết nối
+            await Task.Delay(200);
             
             _isConnected = false;
+            _settings = null;
+            
+            _logger.LogInformation("Đã ngắt kết nối thành công");
+            
             return true;
         }
 
         public async Task<RouterInfo> GetRouterInfoAsync()
         {
-            _logger.LogInformation("Lấy thông tin Router");
-            await Task.Delay(800);
+            _logger.LogInformation("Đang lấy thông tin Router...");
             
-            // Dữ liệu mẫu
-            return new RouterInfo
+            if (!_isConnected)
             {
-                RouterName = "MikroTik-Office",
-                Model = "RouterBOARD 3011UiAS",
-                SerialNumber = "HY306XD58291",
-                FirmwareVersion = "6.48.6",
-                Architecture = "tile",
-                BoardName = "RB3011UiAS",
-                IpAddress = "192.168.1.1",
-                MacAddress = "E8:DC:4F:CA:DB:92",
-                Uptime = 1209600, // 14 ngày
-                LicenseLevel = "4",
-                CurrentTime = DateTime.Now
+                _logger.LogWarning("Không thể lấy thông tin Router: Chưa kết nối");
+                throw new InvalidOperationException("Chưa kết nối đến Router");
+            }
+            
+            // Giả lập thời gian phản hồi
+            await Task.Delay(300);
+            
+            var routerInfo = new RouterInfo
+            {
+                Name = "MikroTik Demo",
+                Model = "RouterBOARD 3011",
+                SerialNumber = "44G70B7777AA",
+                Version = "RouterOS v7.10",
+                Architecture = "arm64",
+                BoardName = "CCR2004-1G-12S+2XS",
+                UptimeSeconds = 924168, // 10 ngày 16 giờ 42 phút 48 giây
+                LastUpdateCheck = DateTime.Now.AddDays(-2),
+                UpdateAvailable = false,
+                LicenseLevel = "5",
+                MacAddress = "AA:BB:CC:DD:EE:FF",
+                IpAddress = _settings?.IpAddress ?? "192.168.1.1"
             };
+            
+            _logger.LogInformation("Đã lấy thông tin Router thành công");
+            
+            return routerInfo;
         }
 
         public async Task<SystemResources> GetSystemResourcesAsync()
         {
-            _logger.LogInformation("Lấy thông tin tài nguyên hệ thống");
-            await Task.Delay(600);
+            _logger.LogInformation("Đang lấy thông tin tài nguyên hệ thống...");
             
-            // Tạo số ngẫu nhiên để giả lập việc thay đổi tài nguyên
-            var rand = new Random();
-            
-            return new SystemResources
+            if (!_isConnected)
             {
-                CpuLoad = rand.Next(15, 45),
-                MemoryUsed = 256 * 1024 * 1024 + rand.Next(1, 50) * 1024 * 1024,
-                MemoryTotal = 1024 * 1024 * 1024,
-                HddUsed = 120 * 1024 * 1024 + rand.Next(1, 10) * 1024 * 1024,
-                HddTotal = 512 * 1024 * 1024,
-                Temperature = rand.Next(35, 55),
-                Voltage = 24,
-                CurrentFirmwareVersion = 6486,
-                LatestFirmwareVersion = rand.Next(0, 2) == 0 ? 6486 : 6487
-            };
-        }
-
-        public async Task<bool> RebootRouterAsync()
-        {
-            _logger.LogInformation("Khởi động lại Router");
-            await Task.Delay(2000);
+                _logger.LogWarning("Không thể lấy thông tin tài nguyên: Chưa kết nối");
+                throw new InvalidOperationException("Chưa kết nối đến Router");
+            }
             
-            // Trong môi trường thực tế, kết nối sẽ mất do router khởi động lại
-            // Ở đây ta vẫn giữ trạng thái kết nối cho môi trường demo
-            return true;
-        }
-
-        public async Task<bool> BackupConfigurationAsync(string filename)
-        {
-            _logger.LogInformation($"Sao lưu cấu hình tới {filename}");
-            await Task.Delay(3000);
-            return true;
-        }
-
-        public async Task<bool> RestoreConfigurationAsync(string filename)
-        {
-            _logger.LogInformation($"Khôi phục cấu hình từ {filename}");
-            await Task.Delay(5000);
-            return true;
+            // Giả lập thời gian phản hồi
+            await Task.Delay(200);
+            
+            // Tạo giá trị ngẫu nhiên nhưng thực tế
+            var cpuLoad = _random.Next(10, 35); // 10-35%
+            
+            var systemResources = new SystemResources
+            {
+                CpuLoad = cpuLoad,
+                MemoryUsed = 409.6 * 1024 * 1024, // 409.6 MB
+                MemoryTotal = 1024 * 1024 * 1024, // 1 GB
+                HddUsed = 60 * 1024 * 1024, // 60 MB
+                HddTotal = 200 * 1024 * 1024, // 200 MB
+                Temperature = 41 + _random.Next(0, 3), // 41-44°C
+                LastUpdated = DateTime.Now
+            };
+            
+            _logger.LogInformation("Đã lấy thông tin tài nguyên hệ thống thành công");
+            
+            return systemResources;
         }
     }
 }
