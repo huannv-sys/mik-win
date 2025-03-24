@@ -1,18 +1,220 @@
-// Utility functions for MikroTik Monitor Web Application
-
-// Toggle loading spinner
-function toggleLoading(show) {
-    const spinner = document.getElementById('loadingSpinner');
-    if (!spinner) return;
+// Site JavaScript
+$(document).ready(function() {
+    // Khởi tạo tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
     
+    // Hiệu ứng cho bảng
+    $(".table-hover tbody tr").click(function() {
+        var href = $(this).find("a").attr("href");
+        if (href) {
+            window.location = href;
+        }
+    });
+    
+    // Cập nhật dữ liệu theo thời gian thực
+    setupAutoRefresh();
+});
+
+// Hiển thị biểu đồ traffic
+function setupTrafficChart(elementId, data) {
+    var ctx = document.getElementById(elementId);
+    if (!ctx) return;
+    
+    var rxData = data.rxPoints || [];
+    var txData = data.txPoints || [];
+    
+    var labels = rxData.map(function(point) {
+        var date = new Date(point.timestamp);
+        return date.getHours() + ':' + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
+    });
+    
+    var rxValues = rxData.map(function(point) { 
+        return point.value / 1024; // Convert to KB
+    });
+    
+    var txValues = txData.map(function(point) { 
+        return point.value / 1024; // Convert to KB
+    });
+    
+    if (window.trafficChart) {
+        window.trafficChart.destroy();
+    }
+    
+    window.trafficChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Tải xuống (KB/s)',
+                    data: rxValues,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Tải lên (KB/s)',
+                    data: txValues,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'KB/s'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Thời gian'
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.dataset.label || '';
+                            var value = context.parsed.y || 0;
+                            
+                            if (value >= 1024) {
+                                return label + ': ' + (value / 1024).toFixed(2) + ' MB/s';
+                            } else {
+                                return label + ': ' + value.toFixed(2) + ' KB/s';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Hiển thị biểu đồ tài nguyên
+function setupResourceChart(elementId, data) {
+    var ctx = document.getElementById(elementId);
+    if (!ctx) return;
+    
+    if (window.resourceChart) {
+        window.resourceChart.destroy();
+    }
+    
+    window.resourceChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Đã sử dụng', 'Còn trống'],
+            datasets: [{
+                data: [data.used, data.total - data.used],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.label || '';
+                            var value = context.raw || 0;
+                            
+                            if (data.type === 'memory' || data.type === 'disk') {
+                                return label + ': ' + formatBytes(value);
+                            } else {
+                                return label + ': ' + value.toFixed(2) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Cập nhật dữ liệu tự động
+function setupAutoRefresh() {
+    // Thiết lập tự động làm mới dữ liệu
+    var autoRefreshElements = document.querySelectorAll('[data-auto-refresh]');
+    autoRefreshElements.forEach(function(element) {
+        var url = element.getAttribute('data-auto-refresh');
+        var interval = element.getAttribute('data-refresh-interval') || 10000; // 10 giây mặc định
+        
+        if (url) {
+            // Cập nhật ban đầu
+            refreshData(element, url);
+            
+            // Thiết lập cập nhật định kỳ
+            setInterval(function() {
+                refreshData(element, url);
+            }, parseInt(interval));
+        }
+    });
+}
+
+// Gọi API để lấy dữ liệu mới
+function refreshData(element, url) {
+    $(element).find('.loading-indicator').show();
+    
+    fetchApi(url)
+        .then(function(data) {
+            if (data.success) {
+                var template = element.getAttribute('data-template');
+                if (template && window[template]) {
+                    window[template](element, data.data);
+                } else {
+                    $(element).html(JSON.stringify(data.data));
+                }
+            } else {
+                console.error('Error refreshing data:', data.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error refreshing data:', error);
+        })
+        .finally(function() {
+            $(element).find('.loading-indicator').hide();
+        });
+}
+
+// Bật/tắt trạng thái loading
+function toggleLoading(show) {
     if (show) {
-        spinner.classList.remove('d-none');
+        $('#loading-overlay').show();
     } else {
-        spinner.classList.add('d-none');
+        $('#loading-overlay').hide();
     }
 }
 
-// Format bytes to human-readable format
+// Format bytes
 function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes';
     
@@ -25,109 +227,71 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-// Format uptime (seconds to days, hours, minutes, seconds)
+// Format uptime
 function formatUptime(seconds) {
-    if (seconds < 0) return 'Invalid uptime';
+    if (!seconds) return 'N/A';
     
-    const days = Math.floor(seconds / 86400);
-    seconds %= 86400;
-    const hours = Math.floor(seconds / 3600);
-    seconds %= 3600;
-    const minutes = Math.floor(seconds / 60);
-    seconds %= 60;
+    seconds = parseInt(seconds);
+    var days = Math.floor(seconds / (3600 * 24));
+    var hours = Math.floor((seconds % (3600 * 24)) / 3600);
+    var minutes = Math.floor((seconds % 3600) / 60);
     
-    let result = '';
-    if (days > 0) result += days + 'd ';
-    if (hours > 0) result += hours + 'h ';
-    if (minutes > 0) result += minutes + 'm ';
-    result += seconds + 's';
+    var result = '';
+    if (days > 0) result += days + ' ngày ';
+    if (hours > 0 || days > 0) result += hours + ' giờ ';
+    result += minutes + ' phút';
     
     return result;
 }
 
-// Show notification
+// Hiển thị thông báo
 function showNotification(message, type = 'info') {
-    // Check if the notification container exists, if not create it
-    let container = document.getElementById('notificationContainer');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'notificationContainer';
-        container.style.position = 'fixed';
-        container.style.top = '20px';
-        container.style.right = '20px';
-        container.style.zIndex = '9999';
-        document.body.appendChild(container);
+    var alertClass = 'alert-info';
+    var icon = 'bi-info-circle';
+    
+    switch (type) {
+        case 'success':
+            alertClass = 'alert-success';
+            icon = 'bi-check-circle';
+            break;
+        case 'warning':
+            alertClass = 'alert-warning';
+            icon = 'bi-exclamation-triangle';
+            break;
+        case 'error':
+            alertClass = 'alert-danger';
+            icon = 'bi-x-circle';
+            break;
     }
     
-    // Create the notification element
-    const notification = document.createElement('div');
-    notification.classList.add('toast', 'show');
+    var notification = $('<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
+                         '<i class="bi ' + icon + '"></i> ' + message +
+                         '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                         '</div>');
     
-    // Add appropriate color based on type
-    if (type === 'success') {
-        notification.classList.add('bg-success', 'text-white');
-    } else if (type === 'error') {
-        notification.classList.add('bg-danger', 'text-white');
-    } else if (type === 'warning') {
-        notification.classList.add('bg-warning');
-    } else {
-        notification.classList.add('bg-info', 'text-white');
-    }
+    $('#notification-container').append(notification);
     
-    // Create the notification content
-    notification.innerHTML = `
-        <div class="toast-header">
-            <strong class="me-auto">MikroTik Monitor</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
-    `;
-    
-    // Add the notification to the container
-    container.appendChild(notification);
-    
-    // Add event listener to close button
-    const closeButton = notification.querySelector('.btn-close');
-    closeButton.addEventListener('click', function() {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    });
-    
-    // Automatically remove the notification after 5 seconds
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
+    setTimeout(function() {
+        notification.alert('close');
     }, 5000);
 }
 
-// Generic API function for GET requests
+// Fetch API wrapper
 async function fetchApi(url) {
-    toggleLoading(true);
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
+            throw new Error('Network response was not ok: ' + response.statusText);
         }
-        const data = await response.json();
-        return data;
+        return await response.json();
     } catch (error) {
-        showNotification(`Error fetching data: ${error.message}`, 'error');
-        console.error('API Error:', error);
-        return null;
-    } finally {
-        toggleLoading(false);
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message };
     }
 }
 
-// Generic API function for POST requests
+// Post API wrapper
 async function postApi(url, data) {
-    toggleLoading(true);
     try {
         const response = await fetch(url, {
             method: 'POST',
@@ -138,25 +302,12 @@ async function postApi(url, data) {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
+            throw new Error('Network response was not ok: ' + response.statusText);
         }
         
-        const responseData = await response.json();
-        return responseData;
+        return await response.json();
     } catch (error) {
-        showNotification(`Error posting data: ${error.message}`, 'error');
-        console.error('API Error:', error);
-        return null;
-    } finally {
-        toggleLoading(false);
+        console.error('Error posting data:', error);
+        return { success: false, message: error.message };
     }
 }
-
-// Add a loading spinner to the page
-document.addEventListener('DOMContentLoaded', function() {
-    const loadingDiv = document.createElement('div');
-    loadingDiv.id = 'loadingSpinner';
-    loadingDiv.className = 'loading-overlay d-none';
-    loadingDiv.innerHTML = '<div class="spinner"></div>';
-    document.body.appendChild(loadingDiv);
-});

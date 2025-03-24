@@ -1,290 +1,116 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using mikk_mmc_web.Models;
 using mikk_mmc_web.Services;
+using System;
+using System.Threading.Tasks;
 
 namespace mikk_mmc_web.Controllers
 {
     public class InterfaceController : Controller
     {
         private readonly ILogger<InterfaceController> _logger;
-        private readonly IRouterService _routerService;
         private readonly IInterfaceService _interfaceService;
+        private readonly IRouterService _routerService;
 
         public InterfaceController(
             ILogger<InterfaceController> logger,
-            IRouterService routerService,
-            IInterfaceService interfaceService)
+            IInterfaceService interfaceService,
+            IRouterService routerService)
         {
             _logger = logger;
-            _routerService = routerService;
             _interfaceService = interfaceService;
+            _routerService = routerService;
         }
 
-        // Hiển thị danh sách giao diện mạng
         public async Task<IActionResult> Index()
         {
             try
             {
-                // Kiểm tra kết nối
                 if (!_routerService.IsConnected)
                 {
-                    TempData["WarningMessage"] = "Chưa kết nối tới Router. Vui lòng kết nối trước.";
-                    return RedirectToAction("Settings", "Home");
+                    return View("NotConnected");
                 }
 
-                // Lấy danh sách giao diện mạng
-                var interfaces = await _interfaceService.GetAllInterfacesAsync();
+                var interfaces = await _interfaceService.GetInterfacesAsync();
                 return View(interfaces);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi hiển thị danh sách giao diện mạng");
-                TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
-                return RedirectToAction("Index", "Home");
+                _logger.LogError(ex, "Lỗi khi lấy danh sách giao diện mạng");
+                ViewBag.ErrorMessage = "Có lỗi xảy ra khi tải danh sách giao diện mạng. Chi tiết: " + ex.Message;
+                return View("Error");
             }
         }
 
-        // Hiển thị chi tiết giao diện mạng
         public async Task<IActionResult> Details(string name)
         {
             try
             {
-                // Kiểm tra kết nối
                 if (!_routerService.IsConnected)
                 {
-                    TempData["WarningMessage"] = "Chưa kết nối tới Router. Vui lòng kết nối trước.";
-                    return RedirectToAction("Settings", "Home");
-                }
-
-                // Kiểm tra tham số đầu vào
-                if (string.IsNullOrEmpty(name))
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-
-                // Lấy thông tin giao diện mạng
-                var networkInterface = await _interfaceService.GetInterfaceByNameAsync(name);
-                
-                // Lấy lịch sử lưu lượng gần đây (24 giờ qua)
-                var endTime = DateTime.Now;
-                var startTime = endTime.AddHours(-24);
-                var trafficHistory = await _interfaceService.GetTrafficHistoryAsync(name, startTime, endTime);
-                
-                // Tạo model
-                var viewModel = new InterfaceDetailsViewModel
-                {
-                    Interface = networkInterface,
-                    TrafficHistory = trafficHistory
-                };
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi khi hiển thị chi tiết giao diện mạng {name}");
-                TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        // API để lấy danh sách giao diện mạng
-        [HttpGet]
-        [Route("api/interfaces")]
-        public async Task<IActionResult> GetAllInterfaces()
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                var interfaces = await _interfaceService.GetAllInterfacesAsync();
-                return Json(interfaces);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy danh sách giao diện mạng qua API");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        // API để lấy chi tiết giao diện mạng
-        [HttpGet]
-        [Route("api/interfaces/{name}")]
-        public async Task<IActionResult> GetInterfaceByName(string name)
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
+                    return View("NotConnected");
                 }
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    return BadRequest(new { error = "Tên giao diện mạng không được để trống" });
+                    return BadRequest("Tên giao diện không được để trống");
                 }
 
                 var networkInterface = await _interfaceService.GetInterfaceByNameAsync(name);
-                return Json(networkInterface);
+                if (networkInterface == null)
+                {
+                    return NotFound($"Không tìm thấy giao diện '{name}'");
+                }
+
+                var traffic = await _interfaceService.GetInterfaceTrafficAsync(name);
+                ViewBag.Traffic = traffic;
+
+                return View(networkInterface);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Lỗi khi lấy chi tiết giao diện mạng {name} qua API");
-                return StatusCode(500, new { error = ex.Message });
+                _logger.LogError(ex, "Lỗi khi lấy thông tin giao diện {Name}", name);
+                ViewBag.ErrorMessage = "Có lỗi xảy ra khi tải thông tin giao diện. Chi tiết: " + ex.Message;
+                return View("Error");
             }
         }
 
-        // API để lấy lịch sử lưu lượng
-        [HttpGet]
-        [Route("api/interfaces/{name}/traffic")]
-        public async Task<IActionResult> GetTrafficHistory(string name, DateTime? start, DateTime? end)
+        public async Task<IActionResult> Traffic(string name)
         {
             try
             {
                 if (!_routerService.IsConnected)
                 {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
+                    return Json(new { success = false, message = "Chưa kết nối đến Router" });
                 }
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    return BadRequest(new { error = "Tên giao diện mạng không được để trống" });
+                    return Json(new { success = false, message = "Tên giao diện không được để trống" });
                 }
 
-                // Mặc định lấy dữ liệu 24 giờ qua nếu không có tham số
-                var endTime = end ?? DateTime.Now;
-                var startTime = start ?? endTime.AddHours(-24);
+                var traffic = await _interfaceService.GetInterfaceTrafficAsync(name);
+                if (traffic == null)
+                {
+                    return Json(new { success = false, message = $"Không tìm thấy dữ liệu lưu lượng cho giao diện '{name}'" });
+                }
 
-                var trafficHistory = await _interfaceService.GetTrafficHistoryAsync(name, startTime, endTime);
-                return Json(trafficHistory);
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        name = traffic.InterfaceName,
+                        rxPoints = traffic.RxPoints,
+                        txPoints = traffic.TxPoints
+                    }
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Lỗi khi lấy lịch sử lưu lượng giao diện mạng {name} qua API");
-                return StatusCode(500, new { error = ex.Message });
+                _logger.LogError(ex, "Lỗi khi lấy dữ liệu lưu lượng cho giao diện {Name}", name);
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
         }
-
-        // API để bật giao diện mạng
-        [HttpPost]
-        [Route("api/interfaces/{name}/enable")]
-        public async Task<IActionResult> EnableInterface(string name)
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    return BadRequest(new { error = "Tên giao diện mạng không được để trống" });
-                }
-
-                bool success = await _interfaceService.EnableInterfaceAsync(name);
-                
-                if (success)
-                {
-                    _logger.LogInformation($"Bật giao diện mạng {name} thành công");
-                    return Json(new { success = true, message = $"Đã bật giao diện mạng {name}" });
-                }
-                else
-                {
-                    _logger.LogWarning($"Bật giao diện mạng {name} thất bại");
-                    return StatusCode(500, new { error = $"Không thể bật giao diện mạng {name}" });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi khi bật giao diện mạng {name}");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        // API để tắt giao diện mạng
-        [HttpPost]
-        [Route("api/interfaces/{name}/disable")]
-        public async Task<IActionResult> DisableInterface(string name)
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    return BadRequest(new { error = "Tên giao diện mạng không được để trống" });
-                }
-
-                bool success = await _interfaceService.DisableInterfaceAsync(name);
-                
-                if (success)
-                {
-                    _logger.LogInformation($"Tắt giao diện mạng {name} thành công");
-                    return Json(new { success = true, message = $"Đã tắt giao diện mạng {name}" });
-                }
-                else
-                {
-                    _logger.LogWarning($"Tắt giao diện mạng {name} thất bại");
-                    return StatusCode(500, new { error = $"Không thể tắt giao diện mạng {name}" });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi khi tắt giao diện mạng {name}");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        // API để đặt lại bộ đếm
-        [HttpPost]
-        [Route("api/interfaces/{name}/reset-counters")]
-        public async Task<IActionResult> ResetInterfaceCounters(string name)
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    return BadRequest(new { error = "Tên giao diện mạng không được để trống" });
-                }
-
-                bool success = await _interfaceService.ResetInterfaceCountersAsync(name);
-                
-                if (success)
-                {
-                    _logger.LogInformation($"Đặt lại bộ đếm giao diện mạng {name} thành công");
-                    return Json(new { success = true, message = $"Đã đặt lại bộ đếm giao diện mạng {name}" });
-                }
-                else
-                {
-                    _logger.LogWarning($"Đặt lại bộ đếm giao diện mạng {name} thất bại");
-                    return StatusCode(500, new { error = $"Không thể đặt lại bộ đếm giao diện mạng {name}" });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi khi đặt lại bộ đếm giao diện mạng {name}");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-    }
-
-    public class InterfaceDetailsViewModel
-    {
-        public NetworkInterface Interface { get; set; }
-        public List<TrafficData> TrafficHistory { get; set; }
     }
 }

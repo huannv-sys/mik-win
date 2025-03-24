@@ -1,10 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using mikk_mmc_web.Models;
 using mikk_mmc_web.Services;
-using mikk_mmc_web.ViewModels;
+using System;
+using System.Threading.Tasks;
 
 namespace mikk_mmc_web.Controllers
 {
@@ -13,212 +12,106 @@ namespace mikk_mmc_web.Controllers
         private readonly ILogger<RouterController> _logger;
         private readonly IRouterService _routerService;
 
-        public RouterController(
-            ILogger<RouterController> logger,
-            IRouterService routerService)
+        public RouterController(ILogger<RouterController> logger, IRouterService routerService)
         {
             _logger = logger;
             _routerService = routerService;
         }
 
-        // Trang trạng thái router
-        public async Task<IActionResult> Status()
-        {
-            try
-            {
-                // Kiểm tra kết nối
-                if (!_routerService.IsConnected)
-                {
-                    TempData["WarningMessage"] = "Chưa kết nối tới Router. Vui lòng kết nối trước.";
-                    return RedirectToAction("Settings", "Home");
-                }
-
-                // Lấy thông tin router
-                var routerInfo = await _routerService.GetRouterInfoAsync();
-                
-                // Lấy thông tin tài nguyên hệ thống
-                var systemResources = await _routerService.GetSystemResourcesAsync();
-                
-                // Tạo ViewModel
-                var viewModel = new RouterStatusViewModel
-                {
-                    RouterInfo = routerInfo,
-                    SystemResources = systemResources
-                };
-                
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi hiển thị trang trạng thái router");
-                TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
-                return RedirectToAction("Index", "Home");
-            }
-        }
-
-        // API để khởi động lại router
-        [HttpPost]
-        [Route("api/router/reboot")]
-        public async Task<IActionResult> RebootRouter()
+        public async Task<IActionResult> Index()
         {
             try
             {
                 if (!_routerService.IsConnected)
                 {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                bool success = await _routerService.RebootRouterAsync();
-                
-                if (success)
-                {
-                    _logger.LogInformation("Khởi động lại router thành công");
-                    return Json(new { success = true, message = "Đã gửi lệnh khởi động lại router" });
-                }
-                else
-                {
-                    _logger.LogWarning("Khởi động lại router thất bại");
-                    return StatusCode(500, new { error = "Không thể khởi động lại router" });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi khởi động lại router");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        // API để sao lưu cấu hình
-        [HttpPost]
-        [Route("api/router/backup")]
-        public async Task<IActionResult> BackupConfiguration([FromBody] BackupRequest request)
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                if (request == null || string.IsNullOrEmpty(request.Filename))
-                {
-                    request = new BackupRequest
-                    {
-                        Filename = $"backup_{DateTime.Now:yyyyMMdd_HHmmss}.rsc"
-                    };
-                }
-
-                bool success = await _routerService.BackupConfigurationAsync(request.Filename);
-                
-                if (success)
-                {
-                    _logger.LogInformation($"Sao lưu cấu hình vào file {request.Filename} thành công");
-                    return Json(new { success = true, message = $"Đã sao lưu cấu hình vào file {request.Filename}" });
-                }
-                else
-                {
-                    _logger.LogWarning($"Sao lưu cấu hình vào file {request.Filename} thất bại");
-                    return StatusCode(500, new { error = "Không thể sao lưu cấu hình" });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi sao lưu cấu hình");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        // API để khôi phục cấu hình
-        [HttpPost]
-        [Route("api/router/restore")]
-        public async Task<IActionResult> RestoreConfiguration([FromBody] RestoreRequest request)
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
-                }
-
-                if (request == null || string.IsNullOrEmpty(request.Filename))
-                {
-                    return BadRequest(new { error = "Tên file không được để trống" });
-                }
-
-                bool success = await _routerService.RestoreConfigurationAsync(request.Filename);
-                
-                if (success)
-                {
-                    _logger.LogInformation($"Khôi phục cấu hình từ file {request.Filename} thành công");
-                    return Json(new { success = true, message = $"Đã khôi phục cấu hình từ file {request.Filename}" });
-                }
-                else
-                {
-                    _logger.LogWarning($"Khôi phục cấu hình từ file {request.Filename} thất bại");
-                    return StatusCode(500, new { error = "Không thể khôi phục cấu hình" });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi khôi phục cấu hình");
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        // API để lấy thông tin router
-        [HttpGet]
-        [Route("api/router/info")]
-        public async Task<IActionResult> GetRouterInfo()
-        {
-            try
-            {
-                if (!_routerService.IsConnected)
-                {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
+                    return View("NotConnected");
                 }
 
                 var routerInfo = await _routerService.GetRouterInfoAsync();
-                return Json(routerInfo);
+                var resources = await _routerService.GetSystemResourcesAsync();
+
+                ViewBag.SystemResources = resources;
+                return View(routerInfo);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi lấy thông tin router qua API");
-                return StatusCode(500, new { error = ex.Message });
+                _logger.LogError(ex, "Lỗi khi lấy thông tin Router");
+                ViewBag.ErrorMessage = "Có lỗi xảy ra khi tải thông tin Router. Chi tiết: " + ex.Message;
+                return View("Error");
             }
         }
 
-        // API để lấy thông tin tài nguyên hệ thống
         [HttpGet]
-        [Route("api/router/resources")]
-        public async Task<IActionResult> GetSystemResources()
+        public IActionResult Connect()
+        {
+            return View(new ConnectionSettings());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Connect(ConnectionSettings settings)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(settings);
+            }
+
+            try
+            {
+                var success = await _routerService.ConnectAsync(settings);
+                if (success)
+                {
+                    _logger.LogInformation("Đã kết nối thành công đến Router {IpAddress}", settings.IpAddress);
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Không thể kết nối đến Router. Vui lòng kiểm tra lại thông tin đăng nhập.");
+                    return View(settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi kết nối đến Router {IpAddress}", settings.IpAddress);
+                ModelState.AddModelError("", "Lỗi khi kết nối: " + ex.Message);
+                return View(settings);
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Disconnect()
+        {
+            try
+            {
+                await _routerService.DisconnectAsync();
+                return RedirectToAction("Connect");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi ngắt kết nối Router");
+                ViewBag.ErrorMessage = "Có lỗi xảy ra khi ngắt kết nối Router. Chi tiết: " + ex.Message;
+                return View("Error");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SystemResources()
         {
             try
             {
                 if (!_routerService.IsConnected)
                 {
-                    return StatusCode(503, new { error = "Chưa kết nối tới Router" });
+                    return View("NotConnected");
                 }
 
-                var systemResources = await _routerService.GetSystemResourcesAsync();
-                return Json(systemResources);
+                var resources = await _routerService.GetSystemResourcesAsync();
+                return View(resources);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi lấy thông tin tài nguyên hệ thống qua API");
-                return StatusCode(500, new { error = ex.Message });
+                _logger.LogError(ex, "Lỗi khi lấy tài nguyên hệ thống");
+                ViewBag.ErrorMessage = "Có lỗi xảy ra khi tải tài nguyên hệ thống. Chi tiết: " + ex.Message;
+                return View("Error");
             }
         }
-    }
-
-    // Lớp để nhận request sao lưu
-    public class BackupRequest
-    {
-        public string Filename { get; set; } = string.Empty;
-    }
-
-    // Lớp để nhận request khôi phục
-    public class RestoreRequest
-    {
-        public string Filename { get; set; } = string.Empty;
     }
 }

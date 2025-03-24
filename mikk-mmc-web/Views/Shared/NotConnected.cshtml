@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Chưa kết nối";
+}
+
+<div class="text-center">
+    <div class="alert alert-warning">
+        <h3><i class="bi bi-exclamation-triangle"></i> Chưa kết nối đến Router</h3>
+        <p>Bạn cần kết nối đến một Router MikroTik để sử dụng chức năng này.</p>
+    </div>
+
+    <div class="mt-4">
+        <a href="@Url.Action("Connect", "Router")" class="btn btn-primary">
+            <i class="bi bi-power"></i> Kết nối ngay
+        </a>
+    </div>
+</div>

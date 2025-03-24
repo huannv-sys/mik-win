@@ -1,0 +1,103 @@
+@model mikk_mmc_web.Models.ConnectionSettings
+@{
+    ViewData["Title"] = "Kết nối Router";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-router"></i> Kết nối đến Router MikroTik</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="Connect">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="IpAddress" class="form-label">Địa chỉ IP</label>
+                        <input asp-for="IpAddress" class="form-control" placeholder="192.168.1.1" />
+                        <span asp-validation-for="IpAddress" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label">Tên đăng nhập</label>
+                        <input asp-for="Username" class="form-control" placeholder="admin" />
+                        <span asp-validation-for="Username" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Mật khẩu</label>
+                        <input asp-for="Password" type="password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Protocol" class="form-label">Giao thức</label>
+                        <select asp-for="Protocol" class="form-select">
+                            <option value="API">API</option>
+                            <option value="SSH">SSH</option>
+                            <option value="SNMP">SNMP</option>
+                        </select>
+                        <span asp-validation-for="Protocol" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Port" class="form-label">Cổng</label>
+                        <input asp-for="Port" type="number" class="form-control" />
+                        <span asp-validation-for="Port" class="text-danger"></span>
+                        <div class="form-text text-muted">
+                            API: 8728, SSH: 22, SNMP: 161
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Timeout" class="form-label">Thời gian chờ (giây)</label>
+                        <input asp-for="Timeout" type="number" class="form-control" />
+                        <span asp-validation-for="Timeout" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-power"></i> Kết nối
+                        </button>
+                        <button type="button" id="demoButton" class="btn btn-outline-secondary">
+                            <i class="bi bi-display"></i> Sử dụng chế độ Demo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Cập nhật cổng dựa trên giao thức
+            $("#Protocol").change(function() {
+                var protocol = $(this).val();
+                switch (protocol) {
+                    case "API":
+                        $("#Port").val(8728);
+                        break;
+                    case "SSH":
+                        $("#Port").val(22);
+                        break;
+                    case "SNMP":
+                        $("#Port").val(161);
+                        break;
+                }
+            });
+            
+            // Nút demo
+            $("#demoButton").click(function() {
+                $("#IpAddress").val("192.168.1.1");
+                $("#Username").val("admin");
+                $("#Password").val("demo-password");
+                $("#Protocol").val("API").trigger("change");
+                $("#Timeout").val(10);
+                $("form").submit();
+            });
+        });
+    </script>
+}

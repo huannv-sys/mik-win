@@ -1,368 +1,368 @@
-@model DashboardViewModel
+@model mikk_mmc_web.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Trang chủ";
+    ViewBag.IsConnected = Model?.Router != null;
+    
+    var lastUpdate = DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy");
 }
 
-<div class="container main-dashboard">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-router"></i> Thông tin Router</h5>
-                    <span class="text-muted small">Cập nhật lần cuối: @Model.LastUpdated.ToString("HH:mm:ss dd/MM/yyyy")</span>
+@if (Model?.Router == null)
+{
+    <div class="alert alert-warning">
+        <h4><i class="bi bi-exclamation-triangle"></i> Chưa kết nối đến Router</h4>
+        <p>Vui lòng kết nối đến một Router MikroTik để xem thông tin.</p>
+        <a href="@Url.Action("Connect", "Router")" class="btn btn-primary">
+            <i class="bi bi-power"></i> Kết nối ngay
+        </a>
+    </div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-router"></i> Thông tin Router</h5>
+            <span class="text-muted small">Cập nhật lần cuối: @lastUpdate</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6 class="border-bottom pb-2 mb-3">Thông tin cơ bản</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Tên Router:</span>
+                        <span>@Model.Router.Name</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Model:</span>
+                        <span>@Model.Router.Model</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Số Serial:</span>
+                        <span>@Model.Router.SerialNumber</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Phiên bản:</span>
+                        <span>@Model.Router.Version</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Thời gian hoạt động:</span>
+                        <span>@(Model.Router.UptimeFormatted ?? "N/A")</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h6 class="border-bottom pb-2 mb-3">Thông tin cơ bản</h6>
-                            <div class="status-item">
-                                <div class="status-label">Tên Router:</div>
-                                <div class="status-value">@Model.RouterInfo.RouterName</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Model:</div>
-                                <div class="status-value">@Model.RouterInfo.Model</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Số Serial:</div>
-                                <div class="status-value">@Model.RouterInfo.SerialNumber</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Phiên bản:</div>
-                                <div class="status-value">@Model.RouterInfo.FirmwareVersion</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Thời gian hoạt động:</div>
-                                <div class="status-value">
-                                    <span id="uptime" data-uptime="@Model.RouterInfo.Uptime"></span>
+                
+                <div class="col-md-4">
+                    <h6 class="border-bottom pb-2 mb-3">Tài nguyên hệ thống</h6>
+                    @if (Model.Resources != null)
+                    {
+                        <div class="mb-2">
+                            <span class="fw-bold">CPU:</span>
+                            <div class="progress mt-1">
+                                <div class="progress-bar @(Model.Resources.CpuLoad > 80 ? "bg-danger" : (Model.Resources.CpuLoad > 60 ? "bg-warning" : "bg-success"))" 
+                                     role="progressbar" 
+                                     style="width: @Model.Resources.CpuLoad%;" 
+                                     aria-valuenow="@Model.Resources.CpuLoad" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    @Model.Resources.CpuLoad.ToString("0.#")%
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <h6 class="border-bottom pb-2 mb-3">Tài nguyên hệ thống</h6>
-                            <div class="status-item">
-                                <div class="status-label">CPU:</div>
-                                <div class="status-value">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @Model.SystemResources.CpuLoad%;" 
-                                            aria-valuenow="@Model.SystemResources.CpuLoad" aria-valuemin="0" aria-valuemax="100">
-                                            @Model.SystemResources.CpuLoad.ToString("0.0")%
-                                        </div>
-                                    </div>
+                        
+                        <div class="mb-2">
+                            <span class="fw-bold">Bộ nhớ:</span>
+                            <div class="progress mt-1">
+                                <div class="progress-bar @(Model.Resources.MemoryPercentage > 80 ? "bg-danger" : (Model.Resources.MemoryPercentage > 60 ? "bg-warning" : "bg-success"))" 
+                                     role="progressbar" 
+                                     style="width: @Model.Resources.MemoryPercentage%;" 
+                                     aria-valuenow="@Model.Resources.MemoryPercentage" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    @Model.Resources.MemoryPercentage.ToString("0.#")%
                                 </div>
                             </div>
-                            <div class="status-item">
-                                <div class="status-label">Bộ nhớ:</div>
-                                <div class="status-value">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @Model.SystemResources.MemoryPercentage%;" 
-                                            aria-valuenow="@Model.SystemResources.MemoryPercentage" aria-valuemin="0" aria-valuemax="100">
-                                            @Model.SystemResources.MemoryPercentage.ToString("0.0")%
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">
-                                        <span id="memory-used" data-bytes="@Model.SystemResources.MemoryUsed"></span> / 
-                                        <span id="memory-total" data-bytes="@Model.SystemResources.MemoryTotal"></span>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Ổ đĩa:</div>
-                                <div class="status-value">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @Model.SystemResources.HddPercentage%;" 
-                                            aria-valuenow="@Model.SystemResources.HddPercentage" aria-valuemin="0" aria-valuemax="100">
-                                            @Model.SystemResources.HddPercentage.ToString("0.0")%
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">
-                                        <span id="hdd-used" data-bytes="@Model.SystemResources.HddUsed"></span> / 
-                                        <span id="hdd-total" data-bytes="@Model.SystemResources.HddTotal"></span>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Nhiệt độ:</div>
-                                <div class="status-value">@Model.SystemResources.Temperature °C</div>
-                            </div>
+                            <small class="text-muted">
+                                @Model.Resources.MemoryFormattedUsed / @Model.Resources.MemoryFormattedTotal
+                            </small>
                         </div>
-                        <div class="col-md-4">
-                            <h6 class="border-bottom pb-2 mb-3">Kết nối mạng</h6>
-                            <div class="status-item">
-                                <div class="status-label">Địa chỉ IP:</div>
-                                <div class="status-value">@Model.RouterInfo.IpAddress</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Địa chỉ MAC:</div>
-                                <div class="status-value">@Model.RouterInfo.MacAddress</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">License:</div>
-                                <div class="status-value">Level @Model.RouterInfo.LicenseLevel</div>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-label">Cập nhật:</div>
-                                <div class="status-value">
-                                    @if (Model.SystemResources.UpdateAvailable)
-                                    {
-                                        <span class="badge bg-warning">Có bản cập nhật mới</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-success">Phiên bản mới nhất</span>
-                                    }
+                        
+                        <div class="mb-2">
+                            <span class="fw-bold">Ổ đĩa:</span>
+                            <div class="progress mt-1">
+                                <div class="progress-bar @(Model.Resources.HddPercentage > 80 ? "bg-danger" : (Model.Resources.HddPercentage > 60 ? "bg-warning" : "bg-success"))" 
+                                     role="progressbar" 
+                                     style="width: @Model.Resources.HddPercentage%;" 
+                                     aria-valuenow="@Model.Resources.HddPercentage" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    @Model.Resources.HddPercentage.ToString("0.#")%
                                 </div>
                             </div>
+                            <small class="text-muted">
+                                @Model.Resources.HddFormattedUsed / @Model.Resources.HddFormattedTotal
+                            </small>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-ethernet"></i> Giao diện mạng</h5>
-                    <a href="@Url.Action("Index", "Interface")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Tên</th>
-                                    <th>Trạng thái</th>
-                                    <th>Địa chỉ IP</th>
-                                    <th>Tốc độ RX/TX</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var iface in Model.TopInterfaces)
-                                {
-                                    <tr>
-                                        <td>
-                                            <a href="@Url.Action("Details", "Interface", new { name = iface.Name })">
-                                                @iface.Name
-                                            </a>
-                                        </td>
-                                        <td>
-                                            @if (iface.IsActive)
-                                            {
-                                                <span class="badge bg-success">Hoạt động</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger">Không hoạt động</span>
-                                            }
-                                        </td>
-                                        <td>@iface.IpAddress</td>
-                                        <td>
-                                            <span class="rx-rate" data-bytes="@iface.RxRate"></span> / 
-                                            <span class="tx-rate" data-bytes="@iface.TxRate"></span>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-shield-check"></i> Luật tường lửa gần đây</h5>
-                    <a href="@Url.Action("Index", "Firewall")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Chain</th>
-                                    <th>Action</th>
-                                    <th>Src/Dst Address</th>
-                                    <th>Lần cuối</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var rule in Model.RecentRules)
-                                {
-                                    <tr class="@(rule.Action == "accept" ? "rule-row-accept" : "rule-row-drop")">
-                                        <td>@rule.Chain</td>
-                                        <td>
-                                            @if (rule.Action == "accept")
-                                            {
-                                                <span class="badge bg-success">@rule.Action</span>
-                                            }
-                                            else if (rule.Action == "drop")
-                                            {
-                                                <span class="badge bg-danger">@rule.Action</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">@rule.Action</span>
-                                            }
-                                        </td>
-                                        <td>@rule.SrcAddress → @rule.DstAddress</td>
-                                        <td>
-                                            @if (rule.LastHit != DateTime.MinValue)
-                                            {
-                                                <span class="text-muted small">@rule.LastHit.ToString("HH:mm:ss dd/MM/yyyy")</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted small">Chưa</span>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-diagram-3"></i> DHCP Leases</h5>
-                    <a href="@Url.Action("Index", "Dhcp")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Địa chỉ</th>
-                                    <th>MAC</th>
-                                    <th>Host</th>
-                                    <th>Trạng thái</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var lease in Model.RecentLeases)
-                                {
-                                    <tr class="@(lease.Active ? "lease-active" : "lease-expired")">
-                                        <td>@lease.Address</td>
-                                        <td>@lease.MacAddress</td>
-                                        <td>@lease.HostName</td>
-                                        <td>
-                                            @if (lease.Blocked)
-                                            {
-                                                <span class="badge bg-danger">Bị chặn</span>
-                                            }
-                                            else if (lease.Active)
-                                            {
-                                                <span class="badge bg-success">Hoạt động</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning text-dark">Hết hạn</span>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Nhật ký gần đây</h5>
-                    <a href="@Url.Action("Index", "Log")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Thời gian</th>
-                                    <th>Chủ đề</th>
-                                    <th>Thông báo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var log in Model.RecentLogs)
-                                {
-                                    <tr class="@("log-" + log.LogLevel)">
-                                        <td>@log.Time.ToString("HH:mm:ss")</td>
-                                        <td>
-                                            <span class="badge bg-secondary">@log.Topic</span>
-                                        </td>
-                                        <td>@log.Message</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Format các giá trị
-            function updateFormattedValues() {
-                // Format uptime
-                var uptimeSeconds = parseInt($('#uptime').data('uptime'));
-                $('#uptime').text(formatUptime(uptimeSeconds));
-                
-                // Format memory values
-                var memoryUsed = parseInt($('#memory-used').data('bytes'));
-                var memoryTotal = parseInt($('#memory-total').data('bytes'));
-                $('#memory-used').text(formatBytes(memoryUsed, 1));
-                $('#memory-total').text(formatBytes(memoryTotal, 1));
-                
-                // Format hdd values
-                var hddUsed = parseInt($('#hdd-used').data('bytes'));
-                var hddTotal = parseInt($('#hdd-total').data('bytes'));
-                $('#hdd-used').text(formatBytes(hddUsed, 1));
-                $('#hdd-total').text(formatBytes(hddTotal, 1));
-                
-                // Format interface rates
-                $('.rx-rate').each(function() {
-                    var bytes = parseInt($(this).data('bytes'));
-                    $(this).text(formatBytes(bytes, 0) + '/s');
-                });
-                
-                $('.tx-rate').each(function() {
-                    var bytes = parseInt($(this).data('bytes'));
-                    $(this).text(formatBytes(bytes, 0) + '/s');
-                });
-            }
-            
-            // Cập nhật các giá trị ngay khi trang tải xong
-            updateFormattedValues();
-            
-            // Cập nhật dữ liệu Dashboard mỗi 30 giây
-            function refreshDashboard() {
-                $.ajax({
-                    url: '/api/router/info',
-                    method: 'GET',
-                    success: function(data) {
-                        console.log('Dashboard refreshed');
-                        // Trong môi trường thực tế, cập nhật các giá trị từ dữ liệu mới
-                    },
-                    error: function(error) {
-                        console.error('Error refreshing dashboard', error);
+                        
+                        <div class="mb-2">
+                            <span class="fw-bold">Nhiệt độ:</span>
+                            <span class="@(Model.Resources.Temperature > 70 ? "text-danger" : (Model.Resources.Temperature > 60 ? "text-warning" : "text-success"))">
+                                @Model.Resources.Temperature °C
+                            </span>
+                        </div>
                     }
-                });
-            }
-            
-            // Thiết lập interval để cập nhật dữ liệu
-            // setInterval(refreshDashboard, 30000);
-        });
-    </script>
+                    else
+                    {
+                        <div class="alert alert-info">Đang tải thông tin tài nguyên...</div>
+                    }
+                </div>
+                
+                <div class="col-md-4">
+                    <h6 class="border-bottom pb-2 mb-3">Kết nối mạng</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Địa chỉ IP:</span>
+                        <span>@Model.Router.IpAddress</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Địa chỉ MAC:</span>
+                        <span>@Model.Router.MacAddress</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">License:</span>
+                        <span>Level @Model.Router.LicenseLevel</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Cập nhật:</span>
+                        <span>
+                            @if (Model.Router.UpdateAvailable)
+                            {
+                                <span class="badge bg-warning">Có bản cập nhật mới</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Phiên bản mới nhất</span>
+                            }
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Interfaces != null && Model.Interfaces.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-ethernet"></i> Giao diện mạng</h5>
+                        <a href="@Url.Action("Index", "Interface")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tên</th>
+                                        <th>Trạng thái</th>
+                                        <th>Địa chỉ IP</th>
+                                        <th>Tốc độ RX/TX</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var intf in Model.Interfaces)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a href="@Url.Action("Details", "Interface", new { name = intf.Name })">@intf.Name</a>
+                                            </td>
+                                            <td>
+                                                @if (intf.IsConnected)
+                                                {
+                                                    <span class="badge bg-success">Hoạt động</span>
+                                                }
+                                                else if (intf.IsEnabled)
+                                                {
+                                                    <span class="badge bg-warning">Không kết nối</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">Không hoạt động</span>
+                                                }
+                                            </td>
+                                            <td>@(string.IsNullOrEmpty(intf.IpAddress) ? "-" : intf.IpAddress)</td>
+                                            <td>@intf.FormattedRxRate / @intf.FormattedTxRate</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row mb-4">
+        @if (Model.RecentFirewallRules != null && Model.RecentFirewallRules.Any())
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-shield-check"></i> Luật tường lửa gần đây</h5>
+                        <a href="@Url.Action("Index", "Firewall")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Chain</th>
+                                        <th>Action</th>
+                                        <th>Src/Dst Address</th>
+                                        <th>Lần cuối</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rule in Model.RecentFirewallRules)
+                                    {
+                                        <tr>
+                                            <td>@rule.Chain</td>
+                                            <td>
+                                                @if (rule.Action.Equals("accept", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <span class="badge bg-success">accept</span>
+                                                }
+                                                else if (rule.Action.Equals("drop", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <span class="badge bg-danger">drop</span>
+                                                }
+                                                else if (rule.Action.Equals("reject", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <span class="badge bg-warning">reject</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@rule.Action</span>
+                                                }
+                                            </td>
+                                            <td>@rule.SrcAddress → @rule.DstAddress</td>
+                                            <td>
+                                                <span class="text-muted small">@rule.LastHit.ToString("HH:mm:ss dd/MM/yyyy")</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.DhcpLeases != null && Model.DhcpLeases.Any())
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> DHCP Leases</h5>
+                        <a href="@Url.Action("Index", "Dhcp")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Địa chỉ IP</th>
+                                        <th>MAC</th>
+                                        <th>Host</th>
+                                        <th>Hết hạn</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lease in Model.DhcpLeases)
+                                    {
+                                        <tr>
+                                            <td>@lease.Address</td>
+                                            <td>
+                                                <a href="@Url.Action("Details", "Dhcp", new { macAddress = lease.MacAddress })">
+                                                    @lease.MacAddress
+                                                </a>
+                                            </td>
+                                            <td>@lease.HostName</td>
+                                            <td>
+                                                @if (lease.Dynamic)
+                                                {
+                                                    <span class="text-muted small">@lease.ExpiresAt.ToString("HH:mm dd/MM/yyyy")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info">Static</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.RecentLogs != null && Model.RecentLogs.Any())
+    {
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-journal-text"></i> Nhật ký hệ thống</h5>
+                <a href="@Url.Action("Index", "Log")" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Topics</th>
+                                <th>Mức độ</th>
+                                <th>Nội dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.RecentLogs)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="text-muted small">@log.Time.ToString("HH:mm:ss dd/MM")</span>
+                                    </td>
+                                    <td>@log.Topics</td>
+                                    <td>
+                                        @if (log.Level.Equals("info", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge bg-info">info</span>
+                                        }
+                                        else if (log.Level.Equals("warning", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge bg-warning">warning</span>
+                                        }
+                                        else if (log.Level.Equals("error", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge bg-danger">error</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@log.Level</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Details", "Log", new { id = log.Id })">
+                                            @log.Message
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
 }
