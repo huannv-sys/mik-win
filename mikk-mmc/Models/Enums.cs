@@ -63,4 +63,30 @@ namespace MikroTikMonitor.Models
         /// </summary>
         Critical = 4
     }
+    
+    /// <summary>
+    /// Represents the connection status of a router device
+    /// </summary>
+    public enum ConnectionStatus
+    {
+        /// <summary>
+        /// The device is disconnected
+        /// </summary>
+        Disconnected = 0,
+        
+        /// <summary>
+        /// The device is connecting
+        /// </summary>
+        Connecting = 1,
+        
+        /// <summary>
+        /// The device is connected
+        /// </summary>
+        Connected = 2,
+        
+        /// <summary>
+        /// The connection failed
+        /// </summary>
+        Failed = 3
+    }
 }

@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © 2025")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("A comprehensive network monitoring solution for MikroTik routers")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+de111bf94bd205b9cdf1a76cdfdc2c56a61a4f51")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+29e153f14ab4545364c9c77e2a3654af2e804a55")]
 [assembly: System.Reflection.AssemblyProductAttribute("MikroTik Monitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MikroTikMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

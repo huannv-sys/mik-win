@@ -1,71 +1,95 @@
 #!/bin/bash
 
-# Text formatting
-BOLD='\033[1m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-echo -e "${BOLD}Mikk-MMC Debugging and Deployment Tool${NC}"
+echo "Mikk-MMC Debugging and Deployment Tool"
 echo "This script will help you debug, fix, and deploy the Mikk-MMC application."
-echo ""
 
-# Create necessary directories
+# Tạo thư mục logs nếu chưa tồn tại
 mkdir -p logs
 
-# Step 1: Clone the repository if it doesn't exist
+# Clone repository nếu thư mục mikk-mmc chưa tồn tại
 if [ ! -d "mikk-mmc" ]; then
-    echo -e "${YELLOW}Cloning the repository...${NC}"
-    git clone https://github.com/huannv-sys/mikk-mmc.git
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to clone repository. Please check the URL and your internet connection.${NC}"
-        exit 1
-    fi
-    cd mikk-mmc
+    echo "Cloning repository..."
+    git clone https://github.com/yourusername/mikk-mmc.git
+    cd mikk-mmc || exit 1
 else
-    echo -e "${YELLOW}Repository already exists. Using the existing one.${NC}"
-    cd mikk-mmc
-    echo -e "${YELLOW}Pulling the latest changes...${NC}"
+    echo "Repository already exists. Using the existing one."
+    cd mikk-mmc || exit 1
+    echo "Pulling the latest changes..."
     git pull
+    cd ..
 fi
 
-# Step 2: Analyze the repository
-echo -e "\n${BOLD}Analyzing Repository Structure...${NC}"
-cd ..
+# Phân tích cấu trúc repository
+echo "Analyzing Repository Structure..."
 bash scripts/analyze_repo.sh > logs/repo_analysis.log
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Repository analysis failed. See logs/repo_analysis.log for details.${NC}"
-else
-    echo -e "${GREEN}Repository analysis complete. Results saved to logs/repo_analysis.log${NC}"
-    cat logs/repo_analysis.log
-fi
-cd mikk-mmc
+cat logs/repo_analysis.log
 
-# Step 3: Detect and fix common issues
-echo -e "\n${BOLD}Checking for Common Issues...${NC}"
-cd ..
+# Kiểm tra các vấn đề phổ biến
+echo "Checking for Common Issues..."
 bash scripts/fix_common_issues.sh > logs/fix_issues.log
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Some issues could not be fixed automatically. See logs/fix_issues.log for details.${NC}"
-else
-    echo -e "${GREEN}Fixed common issues. Results saved to logs/fix_issues.log${NC}"
-    cat logs/fix_issues.log
-fi
-cd mikk-mmc
+cat logs/fix_issues.log
 
-# Step 4: Deploy the application
-echo -e "\n${BOLD}Deploying Application...${NC}"
-cd ..
+# Kiểm tra và thêm enum ConnectionStatus nếu cần
+if ! grep -q "public enum ConnectionStatus" mikk-mmc/Models/Enums.cs; then
+    echo "Adding missing ConnectionStatus enum..."
+    cat >> mikk-mmc/Models/Enums.cs << 'EOL'
+    
+    /// <summary>
+    /// Represents the connection status of a router device
+    /// </summary>
+    public enum ConnectionStatus
+    {
+        /// <summary>
+        /// The device is disconnected
+        /// </summary>
+        Disconnected = 0,
+        
+        /// <summary>
+        /// The device is connecting
+        /// </summary>
+        Connecting = 1,
+        
+        /// <summary>
+        /// The device is connected
+        /// </summary>
+        Connected = 2,
+        
+        /// <summary>
+        /// The connection failed
+        /// </summary>
+        Failed = 3
+    }
+EOL
+    echo "Added ConnectionStatus enum successfully."
+fi
+
+# Triển khai ứng dụng
+echo "Deploying Application..."
+# Build phiên bản Windows
 bash scripts/deploy_ubuntu.sh > logs/deployment.log
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Deployment failed. See logs/deployment.log for details.${NC}"
-else
-    echo -e "${GREEN}Deployment completed successfully. Results saved to logs/deployment.log${NC}"
-    cat logs/deployment.log
-fi
-cd mikk-mmc
 
-echo -e "\n${BOLD}Process Complete${NC}"
+# Build phiên bản Ubuntu console
+cd mikk-mmc-ubuntu || {
+    echo "Creating Ubuntu console version..."
+    mkdir -p mikk-mmc-ubuntu
+    cd mikk-mmc-ubuntu
+    if [ ! -f "mikk-mmc-ubuntu.csproj" ]; then
+        dotnet new console
+        # Cập nhật file .csproj với các thư viện cần thiết
+        sed -i 's|<RootNamespace>mikk_mmc_ubuntu</RootNamespace>|<RootNamespace>MikroTikMonitor.Console</RootNamespace>|g' mikk-mmc-ubuntu.csproj
+        sed -i 's|</PropertyGroup>|<AssemblyName>MikroTikMonitor.Console</AssemblyName>\n  </PropertyGroup>\n\n  <ItemGroup>\n    <PackageReference Include="SSH.NET" Version="2023.0.0" />\n    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />\n    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.2" />\n    <PackageReference Include="Spectre.Console" Version="0.48.0" />\n    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />\n    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />\n    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />\n    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />\n  </ItemGroup>|g' mikk-mmc-ubuntu.csproj
+    fi
+}
+
+# Build ứng dụng Ubuntu
+echo "Building Ubuntu console application..."
+dotnet build
+cd ..
+
+echo "Process Complete"
 echo "Please check the logs directory for detailed information about each step."
 echo "If you encountered any issues, please refer to the documentation in the docs directory."
+
+# Hướng dẫn chạy ứng dụng
+echo -e "\nTo run the Ubuntu console application, use:"
+echo "bash run_ubuntu_app.sh"
