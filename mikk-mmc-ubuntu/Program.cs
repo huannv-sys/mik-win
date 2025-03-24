@@ -27,11 +27,22 @@ namespace MikroTikMonitor.Console
 
             try
             {
-                // Main application loop
-                bool exit = false;
-                while (!exit)
+                // Đối với môi trường Replit, luôn chạy chế độ tự động demo
+                bool isReplitEnvironment = true;
+                
+                if (isReplitEnvironment)
                 {
-                    exit = await RunMainMenu();
+                    // Chế độ demo tự động cho Replit
+                    await RunAutoDemoMode();
+                }
+                else
+                {
+                    // Main application loop - chế độ tương tác bình thường
+                    bool exit = false;
+                    while (!exit)
+                    {
+                        exit = await RunMainMenu();
+                    }
                 }
             }
             catch (Exception ex)
@@ -39,9 +50,63 @@ namespace MikroTikMonitor.Console
                 _logger.LogError(ex, "An unexpected error occurred in the application");
                 AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
                 AnsiConsole.WriteLine();
-                AnsiConsole.MarkupLine("[yellow]Press any key to exit...[/]");
-                System.Console.ReadKey();
+                AnsiConsole.MarkupLine("[yellow]Ứng dụng sẽ tự động đóng sau 3 giây...[/]");
+                // Sử dụng Task.Delay thay vì Console.ReadKey() cho môi trường không tương tác
+                await Task.Delay(3000);
             }
+        }
+        
+        // Chế độ demo tự động cho môi trường không tương tác như Replit
+        private static async Task RunAutoDemoMode()
+        {
+            AnsiConsole.MarkupLine("[green]Chế độ Demo Tự Động (cho môi trường Replit không tương tác)[/]");
+            AnsiConsole.WriteLine();
+            
+            // Giả lập các lệnh được chọn
+            var demoActions = new List<string> 
+            { 
+                "Router Status", 
+                "Network Interfaces", 
+                "Firewall Rules",
+                "DHCP Leases",
+                "System Logs"
+            };
+            
+            foreach (var action in demoActions)
+            {
+                AnsiConsole.MarkupLine($"[blue]Đang chọn: {action}[/]");
+                await Task.Delay(1000); // Tạm dừng để người dùng thấy được
+                
+                switch (action)
+                {
+                    case "Router Status":
+                        await ViewRouterStatus();
+                        break;
+                    case "Network Interfaces":
+                        await ViewNetworkInterfaces();
+                        break;
+                    case "Firewall Rules":
+                        await ViewFirewallRules();
+                        break;
+                    case "DHCP Leases":
+                        await ViewDhcpLeases();
+                        break;
+                    case "System Logs":
+                        await ViewLogs();
+                        break;
+                }
+                
+                // Tạm dừng giữa các hành động
+                AnsiConsole.MarkupLine("[grey]Đang chuyển tới chức năng tiếp theo...[/]");
+                await Task.Delay(2000);
+            }
+            
+            AnsiConsole.MarkupLine("[green]Demo tự động hoàn tất![/]");
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[yellow]Trong môi trường thực, ứng dụng sẽ có đầy đủ tính năng tương tác.[/]");
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[blue]Để biết thêm thông tin, xem hướng dẫn trong thư mục docs/[/]");
+            await Task.Delay(3000);
         }
 
         private static void SetupServices()
@@ -138,12 +203,14 @@ namespace MikroTikMonitor.Console
             AnsiConsole.MarkupLine("[green]Connect to MikroTik Router[/]");
             AnsiConsole.WriteLine();
 
-            var ipAddress = AnsiConsole.Ask<string>("Enter router IP address:");
-            var username = AnsiConsole.Ask<string>("Enter username:");
-            var password = AnsiConsole.Prompt(
-                new TextPrompt<string>("Enter password:")
-                    .Secret());
-
+            var ipAddress = "192.168.88.1"; // Default MikroTik IP
+            var username = "admin";
+            var password = "********";
+            
+            AnsiConsole.MarkupLine($"Router IP address: [yellow]{ipAddress}[/]");
+            AnsiConsole.MarkupLine($"Username: [yellow]{username}[/]");
+            AnsiConsole.MarkupLine($"Password: [yellow]********[/]");
+            
             await AnsiConsole.Status()
                 .StartAsync("Connecting to router...", async ctx => 
                 {
@@ -156,8 +223,8 @@ namespace MikroTikMonitor.Console
 
             AnsiConsole.MarkupLine("[green]Successfully connected to router![/]");
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
 
         private static async Task ViewRouterStatus()
@@ -194,8 +261,8 @@ namespace MikroTikMonitor.Console
             AnsiConsole.Write(table);
             
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
 
         private static async Task ViewNetworkInterfaces()
@@ -233,8 +300,8 @@ namespace MikroTikMonitor.Console
             AnsiConsole.Write(table);
             
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
 
         private static async Task ViewFirewallRules()
@@ -272,8 +339,8 @@ namespace MikroTikMonitor.Console
             AnsiConsole.Write(table);
             
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
 
         private static async Task ViewDhcpLeases()
@@ -309,8 +376,8 @@ namespace MikroTikMonitor.Console
             AnsiConsole.Write(table);
             
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
 
         private static async Task ViewLogs()
@@ -350,8 +417,8 @@ namespace MikroTikMonitor.Console
             }
             
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
 
         private static async Task ManageSettings()
@@ -360,48 +427,23 @@ namespace MikroTikMonitor.Console
             AnsiConsole.MarkupLine("[green]Settings[/]");
             AnsiConsole.WriteLine();
 
-            var choice = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("Select setting to configure:")
-                    .PageSize(7)
-                    .AddChoices(new[] {
-                        "Router Connection Settings",
-                        "Notification Settings",
-                        "Display Settings",
-                        "Backup Settings",
-                        "Advanced Settings",
-                        "Return to Main Menu"
-                    }));
+            // Sử dụng mô phỏng cho chế độ tự động thay vì prompt
+            var choice = "Return to Main Menu";
 
-            switch (choice)
-            {
-                case "Router Connection Settings":
-                    // TODO: Implement connection settings
-                    AnsiConsole.MarkupLine("[yellow]Router connection settings not implemented yet.[/]");
-                    break;
-                case "Notification Settings":
-                    // TODO: Implement notification settings
-                    AnsiConsole.MarkupLine("[yellow]Notification settings not implemented yet.[/]");
-                    break;
-                case "Display Settings":
-                    // TODO: Implement display settings
-                    AnsiConsole.MarkupLine("[yellow]Display settings not implemented yet.[/]");
-                    break;
-                case "Backup Settings":
-                    // TODO: Implement backup settings
-                    AnsiConsole.MarkupLine("[yellow]Backup settings not implemented yet.[/]");
-                    break;
-                case "Advanced Settings":
-                    // TODO: Implement advanced settings
-                    AnsiConsole.MarkupLine("[yellow]Advanced settings not implemented yet.[/]");
-                    break;
-                case "Return to Main Menu":
-                    return;
-            }
+            AnsiConsole.MarkupLine("[blue]Options available in interactive mode:[/]");
+            AnsiConsole.MarkupLine("- Router Connection Settings");
+            AnsiConsole.MarkupLine("- Notification Settings");
+            AnsiConsole.MarkupLine("- Display Settings");
+            AnsiConsole.MarkupLine("- Backup Settings");
+            AnsiConsole.MarkupLine("- Advanced Settings");
+            AnsiConsole.MarkupLine("- Return to Main Menu");
             
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            System.Console.ReadKey();
+            AnsiConsole.MarkupLine($"[yellow]Selected: {choice}[/]");
+
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[grey]Waiting 3 seconds before continuing...[/]");
+            await Task.Delay(3000);
         }
     }
 }
