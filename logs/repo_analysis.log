@@ -1,0 +1,48 @@
+========== Repository Analysis ==========
+Analyzing repository structure and dependencies...
+
+----- Detecting Technology Stack -----
+Languages detected:
+
+----- Database Detection -----
+
+----- Dependency Files -----
+
+----- Configuration Files -----
+- GitHub Actions workflows found
+
+----- Directory Structure -----
+Top-level directories:
+- .
+- ..
+- bin
+- .cache
+- .github
+- .local
+- Models
+- obj
+- publish
+- Resources
+- Services
+- ViewModels
+- Windows
+
+----- Documentation -----
+- README.md found
+  First 5 lines:
+# MikroTik Monitor (mikk-mmc)
+
+Một ứng dụng giám sát toàn diện cho các bộ định tuyến MikroTik.
+
+----- Potential Issues -----
+Checking .NET project...
+
+----- Analysis Summary -----
+Potential issues found:
+- Missing dependencies: 0
+- Syntax errors: 0
+- Configuration issues: 0
+
+Recommended actions:
+
+Analysis complete. For more details, check the documentation in the docs directory.
