@@ -1,0 +1,52 @@
+modules = ["bash"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Debug and Deploy Runner"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "bash_workflow"
+
+[[workflows.workflow]]
+name = "Debug and Deploy Runner"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash fix_and_deploy.sh"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "bash_workflow"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash fix_and_deploy.sh"
+
+[deployment]
+run = ["sh", "-c", "bash fix_and_deploy.sh"]
