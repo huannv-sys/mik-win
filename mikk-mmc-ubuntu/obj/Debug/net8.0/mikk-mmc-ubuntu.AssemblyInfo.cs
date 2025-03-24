@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MikroTikMonitor.Console")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e4e2512ce8f95a4b3f474aad8da3d21d62bd39c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+82440b3a23895f2665da25d41612b9e0452a0b39")]
 [assembly: System.Reflection.AssemblyProductAttribute("MikroTikMonitor.Console")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MikroTikMonitor.Console")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

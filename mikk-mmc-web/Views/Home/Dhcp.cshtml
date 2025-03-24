@@ -1,0 +1,380 @@
+@model List<mikk_mmc_web.Models.DhcpLease>
+@{
+    ViewData["Title"] = "DHCP Leases";
+}
+
+<h1>DHCP Leases</h1>
+<p class="lead">Quản lý các kết nối DHCP trên mạng</p>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thông Tin DHCP Server</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th>Trạng Thái</th>
+                            <td><span class="badge bg-success">Đang Hoạt Động</span></td>
+                        </tr>
+                        <tr>
+                            <th>Giao Diện</th>
+                            <td>ether2-LAN</td>
+                        </tr>
+                        <tr>
+                            <th>Pool</th>
+                            <td>192.168.1.100-192.168.1.200</td>
+                        </tr>
+                        <tr>
+                            <th>Lease Time</th>
+                            <td>1d 00:00:00</td>
+                        </tr>
+                        <tr>
+                            <th>DNS Server</th>
+                            <td>192.168.1.1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#configDhcpModal">
+                    <i class="bi bi-gear"></i> Cấu Hình DHCP
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Tóm Tắt</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="border rounded p-3">
+                            <h2 class="text-primary">@Model.Count</h2>
+                            <p>Tổng Leases</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="border rounded p-3">
+                            <h2 class="text-success">@Model.Count(l => l.Status == "active")</h2>
+                            <p>Đang Hoạt Động</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="border rounded p-3">
+                            <h2 class="text-warning">@Model.Count(l => l.Status == "expired")</h2>
+                            <p>Hết Hạn</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStaticLeaseModal">
+                        <i class="bi bi-plus-circle"></i> Thêm Static Lease
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Danh Sách DHCP Leases</h5>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoRefreshSwitch" checked>
+                <label class="form-check-label" for="autoRefreshSwitch">Tự động làm mới (30s)</label>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="dhcpTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Địa Chỉ IP</th>
+                        <th>Địa Chỉ MAC</th>
+                        <th>Tên Máy</th>
+                        <th>Trạng Thái</th>
+                        <th>Hết Hạn Trong</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lease in Model)
+                    {
+                        string statusBadge = lease.Status == "active" ? "bg-success" : "bg-warning";
+                        <tr>
+                            <td>@lease.IpAddress</td>
+                            <td>@lease.MacAddress</td>
+                            <td>@lease.Hostname</td>
+                            <td><span class="badge @statusBadge">@lease.Status</span></td>
+                            <td>@lease.ExpiresIn</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            data-ip="@lease.IpAddress" data-mac="@lease.MacAddress" data-hostname="@lease.Hostname"
+                                            data-bs-toggle="modal" data-bs-target="#makeStaticModal">
+                                        <i class="bi bi-pin"></i> Static
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-ip="@lease.IpAddress" data-mac="@lease.MacAddress"
+                                            data-bs-toggle="modal" data-bs-target="#releaseLeaseModal">
+                                        <i class="bi bi-x-circle"></i> Release
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Config DHCP Modal -->
+<div class="modal fade" id="configDhcpModal" tabindex="-1" aria-labelledby="configDhcpModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configDhcpModalLabel">Cấu Hình DHCP Server</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dhcpConfigForm">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="dhcpEnabled" checked>
+                        <label class="form-check-label" for="dhcpEnabled">Bật DHCP Server</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dhcpInterface" class="form-label">Giao Diện</label>
+                        <select class="form-select" id="dhcpInterface">
+                            <option>ether1-WAN</option>
+                            <option selected>ether2-LAN</option>
+                            <option>ether3</option>
+                            <option>wlan1</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="dhcpPoolStart" class="form-label">IP Bắt Đầu</label>
+                            <input type="text" class="form-control" id="dhcpPoolStart" value="192.168.1.100">
+                        </div>
+                        <div class="col">
+                            <label for="dhcpPoolEnd" class="form-label">IP Kết Thúc</label>
+                            <input type="text" class="form-control" id="dhcpPoolEnd" value="192.168.1.200">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dhcpLeaseTime" class="form-label">Thời Gian Lease</label>
+                        <select class="form-select" id="dhcpLeaseTime">
+                            <option>1 giờ</option>
+                            <option>12 giờ</option>
+                            <option selected>1 ngày</option>
+                            <option>1 tuần</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dhcpDnsServer" class="form-label">DNS Server</label>
+                        <input type="text" class="form-control" id="dhcpDnsServer" value="192.168.1.1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dhcpGateway" class="form-label">Gateway</label>
+                        <input type="text" class="form-control" id="dhcpGateway" value="192.168.1.1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="saveDhcpConfig">Lưu Cấu Hình</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Static Lease Modal -->
+<div class="modal fade" id="addStaticLeaseModal" tabindex="-1" aria-labelledby="addStaticLeaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStaticLeaseModalLabel">Thêm Static DHCP Lease</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStaticLeaseForm">
+                    <div class="mb-3">
+                        <label for="staticMac" class="form-label">Địa Chỉ MAC</label>
+                        <input type="text" class="form-control" id="staticMac" placeholder="00:11:22:33:44:55">
+                    </div>
+                    <div class="mb-3">
+                        <label for="staticIp" class="form-label">Địa Chỉ IP</label>
+                        <input type="text" class="form-control" id="staticIp" placeholder="192.168.1.10">
+                    </div>
+                    <div class="mb-3">
+                        <label for="staticHostname" class="form-label">Tên Máy (tùy chọn)</label>
+                        <input type="text" class="form-control" id="staticHostname" placeholder="laptop-user1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="staticComment" class="form-label">Ghi Chú (tùy chọn)</label>
+                        <input type="text" class="form-control" id="staticComment" placeholder="PC của quản trị viên">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="saveStaticLease">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Make Static Modal -->
+<div class="modal fade" id="makeStaticModal" tabindex="-1" aria-labelledby="makeStaticModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="makeStaticModalLabel">Chuyển Thành Static Lease</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="makeStaticForm">
+                    <div class="mb-3">
+                        <label for="makeStaticMac" class="form-label">Địa Chỉ MAC</label>
+                        <input type="text" class="form-control" id="makeStaticMac" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="makeStaticIp" class="form-label">Địa Chỉ IP</label>
+                        <input type="text" class="form-control" id="makeStaticIp" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="makeStaticHostname" class="form-label">Tên Máy</label>
+                        <input type="text" class="form-control" id="makeStaticHostname">
+                    </div>
+                    <div class="mb-3">
+                        <label for="makeStaticComment" class="form-label">Ghi Chú (tùy chọn)</label>
+                        <input type="text" class="form-control" id="makeStaticComment" placeholder="Mô tả thiết bị">
+                    </div>
+                </form>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Chuyển thành static lease sẽ giúp thiết bị luôn nhận được cùng một địa chỉ IP khi kết nối vào mạng.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmMakeStatic">Xác Nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Release Lease Modal -->
+<div class="modal fade" id="releaseLeaseModal" tabindex="-1" aria-labelledby="releaseLeaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="releaseLeaseModalLabel">Release DHCP Lease</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="releaseIp">
+                <input type="hidden" id="releaseMac">
+                <p>Bạn có chắc chắn muốn release lease cho thiết bị này?</p>
+                <p>Địa chỉ IP: <span id="displayReleaseIp"></span></p>
+                <p>Địa chỉ MAC: <span id="displayReleaseMac"></span></p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Thao tác này sẽ xóa lease hiện tại và buộc thiết bị phải yêu cầu địa chỉ IP mới khi kết nối lại.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmRelease">Release</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Xử lý modal make static
+    var makeStaticModal = document.getElementById('makeStaticModal');
+    makeStaticModal.addEventListener('show.bs.modal', function(event) {
+        var button = event.relatedTarget;
+        var ip = button.getAttribute('data-ip');
+        var mac = button.getAttribute('data-mac');
+        var hostname = button.getAttribute('data-hostname');
+        
+        document.getElementById('makeStaticIp').value = ip;
+        document.getElementById('makeStaticMac').value = mac;
+        document.getElementById('makeStaticHostname').value = hostname;
+    });
+    
+    // Xử lý modal release lease
+    var releaseLeaseModal = document.getElementById('releaseLeaseModal');
+    releaseLeaseModal.addEventListener('show.bs.modal', function(event) {
+        var button = event.relatedTarget;
+        var ip = button.getAttribute('data-ip');
+        var mac = button.getAttribute('data-mac');
+        
+        document.getElementById('releaseIp').value = ip;
+        document.getElementById('releaseMac').value = mac;
+        document.getElementById('displayReleaseIp').textContent = ip;
+        document.getElementById('displayReleaseMac').textContent = mac;
+    });
+    
+    // Xử lý các nút xác nhận
+    document.getElementById('saveDhcpConfig').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('configDhcpModal'));
+        modal.hide();
+    });
+    
+    document.getElementById('saveStaticLease').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('addStaticLeaseModal'));
+        modal.hide();
+    });
+    
+    document.getElementById('confirmMakeStatic').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('makeStaticModal'));
+        modal.hide();
+    });
+    
+    document.getElementById('confirmRelease').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('releaseLeaseModal'));
+        modal.hide();
+    });
+    
+    // Auto refresh
+    var autoRefreshInterval;
+    var autoRefreshSwitch = document.getElementById('autoRefreshSwitch');
+    
+    function startAutoRefresh() {
+        autoRefreshInterval = setInterval(function() {
+            window.location.reload();
+        }, 30000);
+    }
+    
+    function stopAutoRefresh() {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    autoRefreshSwitch.addEventListener('change', function() {
+        if (this.checked) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+    
+    // Bắt đầu auto refresh nếu switch được bật
+    if (autoRefreshSwitch.checked) {
+        startAutoRefresh();
+    }
+</script>
+}

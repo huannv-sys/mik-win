@@ -1,0 +1,451 @@
+@model List<mikk_mmc_web.Models.LogEntry>
+@{
+    ViewData["Title"] = "Nhật Ký Hệ Thống";
+}
+
+<h1>Nhật Ký Hệ Thống</h1>
+<p class="lead">Xem và phân tích nhật ký hoạt động của router</p>
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchLogs" placeholder="Tìm kiếm trong nhật ký...">
+            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                <i class="bi bi-search"></i> Tìm
+            </button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-end">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" id="refreshLogs">
+                    <i class="bi bi-arrow-clockwise"></i> Làm Mới
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel"></i> Lọc
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="logTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                    Tất Cả
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                    Hệ Thống
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="interface-tab" data-bs-toggle="tab" data-bs-target="#interface" type="button" role="tab">
+                    Giao Diện
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="firewall-tab" data-bs-toggle="tab" data-bs-target="#firewall" type="button" role="tab">
+                    Tường Lửa
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="dhcp-tab" data-bs-toggle="tab" data-bs-target="#dhcp" type="button" role="tab">
+                    DHCP
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="error-tab" data-bs-toggle="tab" data-bs-target="#error" type="button" role="tab">
+                    Lỗi
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content" id="logTabsContent">
+            <div class="tab-pane fade show active" id="all" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover" id="logsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Cấp Độ</th>
+                                <th>Chủ Đề</th>
+                                <th>Nội Dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model)
+                            {
+                                string levelClass = log.Level switch
+                                {
+                                    "info" => "table-info",
+                                    "warning" => "table-warning",
+                                    "error" => "table-danger",
+                                    _ => ""
+                                };
+                                <tr class="@levelClass">
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@log.Level</td>
+                                    <td>@log.Topic</td>
+                                    <td>@log.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="system" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Cấp Độ</th>
+                                <th>Nội Dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.Where(l => l.Topic == "system"))
+                            {
+                                string levelClass = log.Level switch
+                                {
+                                    "info" => "table-info",
+                                    "warning" => "table-warning",
+                                    "error" => "table-danger",
+                                    _ => ""
+                                };
+                                <tr class="@levelClass">
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@log.Level</td>
+                                    <td>@log.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="interface" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Cấp Độ</th>
+                                <th>Nội Dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.Where(l => l.Topic == "interface"))
+                            {
+                                string levelClass = log.Level switch
+                                {
+                                    "info" => "table-info",
+                                    "warning" => "table-warning",
+                                    "error" => "table-danger",
+                                    _ => ""
+                                };
+                                <tr class="@levelClass">
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@log.Level</td>
+                                    <td>@log.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="firewall" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Cấp Độ</th>
+                                <th>Nội Dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.Where(l => l.Topic == "firewall"))
+                            {
+                                string levelClass = log.Level switch
+                                {
+                                    "info" => "table-info",
+                                    "warning" => "table-warning",
+                                    "error" => "table-danger",
+                                    _ => ""
+                                };
+                                <tr class="@levelClass">
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@log.Level</td>
+                                    <td>@log.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="dhcp" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Cấp Độ</th>
+                                <th>Nội Dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.Where(l => l.Topic == "dhcp"))
+                            {
+                                string levelClass = log.Level switch
+                                {
+                                    "info" => "table-info",
+                                    "warning" => "table-warning",
+                                    "error" => "table-danger",
+                                    _ => ""
+                                };
+                                <tr class="@levelClass">
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@log.Level</td>
+                                    <td>@log.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="error" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Chủ Đề</th>
+                                <th>Nội Dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.Where(l => l.Level == "error"))
+                            {
+                                <tr class="table-danger">
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>@log.Topic</td>
+                                    <td>@log.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <button class="btn btn-sm btn-outline-primary" id="loadMoreLogs">
+            <i class="bi bi-cloud-download"></i> Tải Thêm
+        </button>
+        <button class="btn btn-sm btn-outline-secondary float-end" data-bs-toggle="modal" data-bs-target="#exportLogsModal">
+            <i class="bi bi-file-earmark-arrow-down"></i> Xuất Nhật Ký
+        </button>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Lọc Nhật Ký</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label">Cấp Độ</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="info" id="filterInfo" checked>
+                            <label class="form-check-label" for="filterInfo">
+                                Thông Tin (Info)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="warning" id="filterWarning" checked>
+                            <label class="form-check-label" for="filterWarning">
+                                Cảnh Báo (Warning)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="error" id="filterError" checked>
+                            <label class="form-check-label" for="filterError">
+                                Lỗi (Error)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chủ Đề</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="system" id="filterSystem" checked>
+                            <label class="form-check-label" for="filterSystem">
+                                Hệ Thống
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="interface" id="filterInterface" checked>
+                            <label class="form-check-label" for="filterInterface">
+                                Giao Diện
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="firewall" id="filterFirewall" checked>
+                            <label class="form-check-label" for="filterFirewall">
+                                Tường Lửa
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="dhcp" id="filterDhcp" checked>
+                            <label class="form-check-label" for="filterDhcp">
+                                DHCP
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="wireless" id="filterWireless" checked>
+                            <label class="form-check-label" for="filterWireless">
+                                Wireless
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="script" id="filterScript" checked>
+                            <label class="form-check-label" for="filterScript">
+                                Script
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filterDateRange" class="form-label">Khoảng Thời Gian</label>
+                        <select class="form-select" id="filterDateRange">
+                            <option value="1h">1 giờ qua</option>
+                            <option value="6h">6 giờ qua</option>
+                            <option value="12h">12 giờ qua</option>
+                            <option value="24h" selected>24 giờ qua</option>
+                            <option value="7d">7 ngày qua</option>
+                            <option value="30d">30 ngày qua</option>
+                            <option value="custom">Tùy chỉnh...</option>
+                        </select>
+                    </div>
+                    <div id="customDateRange" class="mb-3 d-none">
+                        <div class="row">
+                            <div class="col">
+                                <label for="filterStartDate" class="form-label">Từ Ngày</label>
+                                <input type="date" class="form-control" id="filterStartDate">
+                            </div>
+                            <div class="col">
+                                <label for="filterEndDate" class="form-label">Đến Ngày</label>
+                                <input type="date" class="form-control" id="filterEndDate">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="applyFilter">Áp Dụng Bộ Lọc</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Logs Modal -->
+<div class="modal fade" id="exportLogsModal" tabindex="-1" aria-labelledby="exportLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportLogsModalLabel">Xuất Nhật Ký</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm">
+                    <div class="mb-3">
+                        <label for="exportFormat" class="form-label">Định Dạng</label>
+                        <select class="form-select" id="exportFormat">
+                            <option value="csv">CSV (Excel, Spreadsheet)</option>
+                            <option value="txt">Text (Văn bản thuần)</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="exportCurrentFilter" checked>
+                            <label class="form-check-label" for="exportCurrentFilter">
+                                Chỉ xuất nhật ký đã lọc hiện tại
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exportFileName" class="form-label">Tên File</label>
+                        <input type="text" class="form-control" id="exportFileName" value="router_logs_@DateTime.Now.ToString("yyyyMMdd")">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmExport">Xuất</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Hiển thị/ẩn bộ chọn ngày tùy chỉnh
+    document.getElementById('filterDateRange').addEventListener('change', function() {
+        var customDateRange = document.getElementById('customDateRange');
+        if (this.value === 'custom') {
+            customDateRange.classList.remove('d-none');
+        } else {
+            customDateRange.classList.add('d-none');
+        }
+    });
+    
+    // Xử lý tìm kiếm
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        var searchText = document.getElementById('searchLogs').value.toLowerCase();
+        var rows = document.querySelectorAll('#logsTable tbody tr');
+        
+        rows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            if (text.includes(searchText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Xử lý tải thêm logs
+    document.getElementById('loadMoreLogs').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+    });
+    
+    // Xử lý áp dụng bộ lọc
+    document.getElementById('applyFilter').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+        modal.hide();
+    });
+    
+    // Xử lý xuất logs
+    document.getElementById('confirmExport').addEventListener('click', function() {
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('exportLogsModal'));
+        modal.hide();
+    });
+    
+    // Xử lý làm mới logs
+    document.getElementById('refreshLogs').addEventListener('click', function() {
+        window.location.reload();
+    });
+</script>
+}

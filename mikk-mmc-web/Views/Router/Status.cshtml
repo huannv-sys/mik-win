@@ -1,0 +1,424 @@
+@model RouterStatusViewModel
+@{
+    ViewData["Title"] = "Trạng thái Router";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-hdd-rack"></i> Trạng thái Router</h5>
+                    <button id="refreshButton" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-arrow-clockwise"></i> Làm mới
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h5 class="border-bottom pb-2 mb-3">Thông tin Router</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody>
+                                        <tr>
+                                            <th style="width:40%">Tên Router</th>
+                                            <td>@Model.RouterInfo.RouterName</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Model</th>
+                                            <td>@Model.RouterInfo.Model</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Số Serial</th>
+                                            <td>@Model.RouterInfo.SerialNumber</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Phiên bản Firmware</th>
+                                            <td>@Model.RouterInfo.FirmwareVersion</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Kiến trúc</th>
+                                            <td>@Model.RouterInfo.Architecture</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Board Name</th>
+                                            <td>@Model.RouterInfo.BoardName</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Địa chỉ IP</th>
+                                            <td>@Model.RouterInfo.IpAddress</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Địa chỉ MAC</th>
+                                            <td>@Model.RouterInfo.MacAddress</td>
+                                        </tr>
+                                        <tr>
+                                            <th>License Level</th>
+                                            <td>@Model.RouterInfo.LicenseLevel</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Thời gian hoạt động</th>
+                                            <td>
+                                                <span id="uptime" data-uptime="@Model.RouterInfo.Uptime"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Thời gian hiện tại</th>
+                                            <td>@Model.RouterInfo.CurrentTime.ToString("HH:mm:ss dd/MM/yyyy")</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <h5 class="border-bottom pb-2 mb-3">Tài nguyên hệ thống</h5>
+                            <div class="mb-4">
+                                <h6>CPU</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                        style="width: @Model.SystemResources.CpuLoad%;" 
+                                        aria-valuenow="@Model.SystemResources.CpuLoad" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                        @Model.SystemResources.CpuLoad.ToString("0.0")%
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6>Bộ nhớ</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                        style="width: @Model.SystemResources.MemoryPercentage%;" 
+                                        aria-valuenow="@Model.SystemResources.MemoryPercentage" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                        @Model.SystemResources.MemoryPercentage.ToString("0.0")%
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        Sử dụng: <span id="memory-used" data-bytes="@Model.SystemResources.MemoryUsed"></span>
+                                    </small>
+                                    <small class="text-muted">
+                                        Tổng: <span id="memory-total" data-bytes="@Model.SystemResources.MemoryTotal"></span>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6>Ổ đĩa</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                        style="width: @Model.SystemResources.HddPercentage%;" 
+                                        aria-valuenow="@Model.SystemResources.HddPercentage" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                        @Model.SystemResources.HddPercentage.ToString("0.0")%
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        Sử dụng: <span id="hdd-used" data-bytes="@Model.SystemResources.HddUsed"></span>
+                                    </small>
+                                    <small class="text-muted">
+                                        Tổng: <span id="hdd-total" data-bytes="@Model.SystemResources.HddTotal"></span>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title mb-3">Nhiệt độ</h6>
+                                            <div class="display-4 mb-3">@Model.SystemResources.Temperature°C</div>
+                                            <div class="text-muted">
+                                                @if (Model.SystemResources.Temperature < 45)
+                                                {
+                                                    <span class="text-success">
+                                                        <i class="bi bi-thermometer-low"></i> Bình thường
+                                                    </span>
+                                                }
+                                                else if (Model.SystemResources.Temperature < 60)
+                                                {
+                                                    <span class="text-warning">
+                                                        <i class="bi bi-thermometer-half"></i> Ấm
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger">
+                                                        <i class="bi bi-thermometer-high"></i> Nóng
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title mb-3">Phiên bản</h6>
+                                            @if (Model.SystemResources.UpdateAvailable)
+                                            {
+                                                <div class="text-warning display-6 mb-3">
+                                                    <i class="bi bi-arrow-up-circle"></i>
+                                                </div>
+                                                <div>
+                                                    Hiện tại: @Model.SystemResources.CurrentFirmwareVersion<br />
+                                                    Mới nhất: @Model.SystemResources.LatestFirmwareVersion<br />
+                                                    <span class="badge bg-warning text-dark mt-2">
+                                                        <i class="bi bi-info-circle"></i> Có bản cập nhật mới
+                                                    </span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-success display-6 mb-3">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </div>
+                                                <div>
+                                                    Phiên bản: @Model.SystemResources.CurrentFirmwareVersion<br />
+                                                    <span class="badge bg-success mt-2">
+                                                        <i class="bi bi-check-circle"></i> Phiên bản mới nhất
+                                                    </span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Quản lý Router</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <button id="rebootButton" class="btn btn-warning w-100">
+                                <i class="bi bi-arrow-repeat"></i> Khởi động lại Router
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button id="backupButton" class="btn btn-primary w-100">
+                                <i class="bi bi-download"></i> Sao lưu cấu hình
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button id="restoreButton" class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#restoreModal">
+                                <i class="bi bi-upload"></i> Khôi phục cấu hình
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận khởi động lại -->
+<div class="modal fade" id="rebootModal" tabindex="-1" aria-labelledby="rebootModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rebootModalLabel">Xác nhận khởi động lại</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn khởi động lại Router?</p>
+                <p class="text-danger">Lưu ý: Tất cả kết nối mạng hiện tại sẽ bị ngắt trong quá trình khởi động lại.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmReboot">Khởi động lại</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận sao lưu -->
+<div class="modal fade" id="backupModal" tabindex="-1" aria-labelledby="backupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="backupModalLabel">Sao lưu cấu hình</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Nhập tên file sao lưu hoặc để trống để sử dụng tên mặc định.</p>
+                <div class="form-group">
+                    <label for="backupFilename">Tên file</label>
+                    <input type="text" class="form-control" id="backupFilename" placeholder="backup_20230324.rsc">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmBackup">Sao lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal khôi phục cấu hình -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-labelledby="restoreModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="restoreModalLabel">Khôi phục cấu hình</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Nhập tên file cấu hình cần khôi phục.</p>
+                <div class="form-group">
+                    <label for="restoreFilename">Tên file</label>
+                    <input type="text" class="form-control" id="restoreFilename" required>
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i> Cảnh báo: Khôi phục cấu hình sẽ ghi đè lên cấu hình hiện tại và có thể làm mất kết nối hiện tại.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmRestore">Khôi phục</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Format các giá trị
+            function updateFormattedValues() {
+                // Format uptime
+                var uptimeSeconds = parseInt($('#uptime').data('uptime'));
+                $('#uptime').text(formatUptime(uptimeSeconds));
+                
+                // Format memory values
+                var memoryUsed = parseInt($('#memory-used').data('bytes'));
+                var memoryTotal = parseInt($('#memory-total').data('bytes'));
+                $('#memory-used').text(formatBytes(memoryUsed, 1));
+                $('#memory-total').text(formatBytes(memoryTotal, 1));
+                
+                // Format hdd values
+                var hddUsed = parseInt($('#hdd-used').data('bytes'));
+                var hddTotal = parseInt($('#hdd-total').data('bytes'));
+                $('#hdd-used').text(formatBytes(hddUsed, 1));
+                $('#hdd-total').text(formatBytes(hddTotal, 1));
+            }
+            
+            // Cập nhật các giá trị ngay khi trang tải xong
+            updateFormattedValues();
+            
+            // Nút làm mới
+            $('#refreshButton').click(function() {
+                location.reload();
+            });
+            
+            // Nút khởi động lại
+            $('#rebootButton').click(function() {
+                $('#rebootModal').modal('show');
+            });
+            
+            // Xác nhận khởi động lại
+            $('#confirmReboot').click(function() {
+                toggleLoading(true);
+                
+                $.ajax({
+                    url: '/api/router/reboot',
+                    method: 'POST',
+                    success: function(data) {
+                        $('#rebootModal').modal('hide');
+                        showNotification('Đã gửi lệnh khởi động lại Router thành công. Router sẽ khởi động lại trong vài giây.', 'success');
+                        setTimeout(function() {
+                            showNotification('Đang chờ Router khởi động lại...', 'info');
+                        }, 3000);
+                        setTimeout(function() {
+                            location.reload();
+                        }, 30000);
+                    },
+                    error: function(error) {
+                        $('#rebootModal').modal('hide');
+                        showNotification('Lỗi khi khởi động lại Router: ' + error.responseJSON.error, 'error');
+                    },
+                    complete: function() {
+                        toggleLoading(false);
+                    }
+                });
+            });
+            
+            // Nút sao lưu
+            $('#backupButton').click(function() {
+                $('#backupModal').modal('show');
+            });
+            
+            // Xác nhận sao lưu
+            $('#confirmBackup').click(function() {
+                var filename = $('#backupFilename').val();
+                toggleLoading(true);
+                
+                $.ajax({
+                    url: '/api/router/backup',
+                    method: 'POST',
+                    data: { filename: filename },
+                    success: function(data) {
+                        $('#backupModal').modal('hide');
+                        showNotification('Sao lưu cấu hình thành công: ' + data.message, 'success');
+                    },
+                    error: function(error) {
+                        $('#backupModal').modal('hide');
+                        showNotification('Lỗi khi sao lưu cấu hình: ' + error.responseJSON.error, 'error');
+                    },
+                    complete: function() {
+                        toggleLoading(false);
+                    }
+                });
+            });
+            
+            // Xác nhận khôi phục
+            $('#confirmRestore').click(function() {
+                var filename = $('#restoreFilename').val();
+                
+                if (!filename) {
+                    showNotification('Vui lòng nhập tên file cấu hình', 'warning');
+                    return;
+                }
+                
+                toggleLoading(true);
+                
+                $.ajax({
+                    url: '/api/router/restore',
+                    method: 'POST',
+                    data: { filename: filename },
+                    success: function(data) {
+                        $('#restoreModal').modal('hide');
+                        showNotification('Khôi phục cấu hình thành công: ' + data.message, 'success');
+                        setTimeout(function() {
+                            showNotification('Router đang áp dụng cấu hình mới...', 'info');
+                        }, 3000);
+                        setTimeout(function() {
+                            location.reload();
+                        }, 20000);
+                    },
+                    error: function(error) {
+                        $('#restoreModal').modal('hide');
+                        showNotification('Lỗi khi khôi phục cấu hình: ' + error.responseJSON.error, 'error');
+                    },
+                    complete: function() {
+                        toggleLoading(false);
+                    }
+                });
+            });
+        });
+    </script>
+}

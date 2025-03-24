@@ -1,0 +1,309 @@
+@model List<mikk_mmc_web.Models.FirewallRule>
+@{
+    ViewData["Title"] = "Tường Lửa";
+}
+
+<h1>Quản Lý Tường Lửa</h1>
+<p class="lead">Quản lý và cấu hình các quy tắc tường lửa</p>
+
+<div class="d-flex justify-content-between mb-3">
+    <div>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+            <i class="bi bi-plus-circle"></i> Thêm Quy Tắc Mới
+        </button>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" id="btnAllRules">Tất Cả</button>
+        <button type="button" class="btn btn-outline-primary" id="btnForwardRules">Forward</button>
+        <button type="button" class="btn btn-outline-primary" id="btnInputRules">Input</button>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover" id="rulesTable">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Chain</th>
+                <th>Hành Động</th>
+                <th>Giao Thức</th>
+                <th>Địa Chỉ Nguồn</th>
+                <th>Địa Chỉ Đích</th>
+                <th>Cổng Đích</th>
+                <th>Ghi Chú</th>
+                <th>Thao Tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rule in Model)
+            {
+                string actionClass = rule.Action == "accept" ? "text-success" : (rule.Action == "drop" ? "text-danger" : "text-warning");
+                <tr data-chain="@rule.Chain">
+                    <td>@rule.Id</td>
+                    <td>@rule.Chain</td>
+                    <td><span class="@actionClass">@rule.Action</span></td>
+                    <td>@rule.Protocol</td>
+                    <td>@rule.SrcAddress</td>
+                    <td>@rule.DstAddress</td>
+                    <td>@rule.DstPort</td>
+                    <td>@rule.Comment</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    data-rule-id="@rule.Id" data-bs-toggle="modal" data-bs-target="#editRuleModal">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    data-rule-id="@rule.Id" data-bs-toggle="modal" data-bs-target="#deleteRuleModal">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Rule Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRuleModalLabel">Thêm Quy Tắc Tường Lửa Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRuleForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="newChain" class="form-label">Chain</label>
+                            <select class="form-select" id="newChain" required>
+                                <option value="">Chọn chain...</option>
+                                <option value="forward">forward</option>
+                                <option value="input">input</option>
+                                <option value="output">output</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="newAction" class="form-label">Hành Động</label>
+                            <select class="form-select" id="newAction" required>
+                                <option value="">Chọn hành động...</option>
+                                <option value="accept">accept</option>
+                                <option value="drop">drop</option>
+                                <option value="reject">reject</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="newProtocol" class="form-label">Giao Thức</label>
+                            <select class="form-select" id="newProtocol">
+                                <option value="">Tất cả</option>
+                                <option value="tcp">tcp</option>
+                                <option value="udp">udp</option>
+                                <option value="icmp">icmp</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="newDstPort" class="form-label">Cổng Đích</label>
+                            <input type="text" class="form-control" id="newDstPort" placeholder="80,443 hoặc 1000-2000">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="newSrcAddress" class="form-label">Địa Chỉ Nguồn</label>
+                            <input type="text" class="form-control" id="newSrcAddress" placeholder="192.168.1.0/24">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="newDstAddress" class="form-label">Địa Chỉ Đích</label>
+                            <input type="text" class="form-control" id="newDstAddress" placeholder="0.0.0.0/0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newComment" class="form-label">Ghi Chú</label>
+                        <input type="text" class="form-control" id="newComment" placeholder="Mô tả quy tắc">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="saveNewRule">Lưu Quy Tắc</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Rule Modal -->
+<div class="modal fade" id="editRuleModal" tabindex="-1" aria-labelledby="editRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRuleModalLabel">Chỉnh Sửa Quy Tắc</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRuleForm">
+                    <input type="hidden" id="editRuleId">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editChain" class="form-label">Chain</label>
+                            <select class="form-select" id="editChain" required>
+                                <option value="forward">forward</option>
+                                <option value="input">input</option>
+                                <option value="output">output</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editAction" class="form-label">Hành Động</label>
+                            <select class="form-select" id="editAction" required>
+                                <option value="accept">accept</option>
+                                <option value="drop">drop</option>
+                                <option value="reject">reject</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editProtocol" class="form-label">Giao Thức</label>
+                            <select class="form-select" id="editProtocol">
+                                <option value="">Tất cả</option>
+                                <option value="tcp">tcp</option>
+                                <option value="udp">udp</option>
+                                <option value="icmp">icmp</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDstPort" class="form-label">Cổng Đích</label>
+                            <input type="text" class="form-control" id="editDstPort">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editSrcAddress" class="form-label">Địa Chỉ Nguồn</label>
+                            <input type="text" class="form-control" id="editSrcAddress">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDstAddress" class="form-label">Địa Chỉ Đích</label>
+                            <input type="text" class="form-control" id="editDstAddress">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editComment" class="form-label">Ghi Chú</label>
+                        <input type="text" class="form-control" id="editComment">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updateRule">Cập Nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Rule Modal -->
+<div class="modal fade" id="deleteRuleModal" tabindex="-1" aria-labelledby="deleteRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRuleModalLabel">Xóa Quy Tắc</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteRuleId">
+                <p>Bạn có chắc chắn muốn xóa quy tắc này?</p>
+                <p>Thao tác này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Xử lý lọc quy tắc
+    document.getElementById('btnAllRules').addEventListener('click', function() {
+        showAllRules();
+    });
+    
+    document.getElementById('btnForwardRules').addEventListener('click', function() {
+        filterRulesByChain('forward');
+    });
+    
+    document.getElementById('btnInputRules').addEventListener('click', function() {
+        filterRulesByChain('input');
+    });
+    
+    function showAllRules() {
+        var rows = document.querySelectorAll('#rulesTable tbody tr');
+        rows.forEach(function(row) {
+            row.style.display = '';
+        });
+    }
+    
+    function filterRulesByChain(chain) {
+        var rows = document.querySelectorAll('#rulesTable tbody tr');
+        rows.forEach(function(row) {
+            if (row.getAttribute('data-chain') === chain) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // Xử lý nút thêm quy tắc
+    document.getElementById('saveNewRule').addEventListener('click', function() {
+        // Trong bản demo hiện tại, chúng ta sẽ chỉ hiển thị thông báo
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('addRuleModal'));
+        modal.hide();
+    });
+    
+    // Xử lý nút sửa quy tắc
+    document.getElementById('updateRule').addEventListener('click', function() {
+        // Trong bản demo hiện tại, chúng ta sẽ chỉ hiển thị thông báo
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('editRuleModal'));
+        modal.hide();
+    });
+    
+    // Xử lý nút xóa quy tắc
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+        // Trong bản demo hiện tại, chúng ta sẽ chỉ hiển thị thông báo
+        alert('Chức năng đang được phát triển');
+        var modal = bootstrap.Modal.getInstance(document.getElementById('deleteRuleModal'));
+        modal.hide();
+    });
+    
+    // Xử lý modal edit rule
+    var editRuleModal = document.getElementById('editRuleModal');
+    editRuleModal.addEventListener('show.bs.modal', function(event) {
+        var button = event.relatedTarget;
+        var ruleId = button.getAttribute('data-rule-id');
+        document.getElementById('editRuleId').value = ruleId;
+        
+        // TODO: Lấy thông tin quy tắc từ API
+        // Trong bản demo, chúng ta sẽ giả lập dữ liệu
+        document.getElementById('editChain').value = 'forward';
+        document.getElementById('editAction').value = 'accept';
+        document.getElementById('editProtocol').value = 'tcp';
+        document.getElementById('editSrcAddress').value = '192.168.1.0/24';
+        document.getElementById('editDstAddress').value = '0.0.0.0/0';
+        document.getElementById('editDstPort').value = '80,443';
+        document.getElementById('editComment').value = 'Allow web access';
+    });
+    
+    // Xử lý modal delete rule
+    var deleteRuleModal = document.getElementById('deleteRuleModal');
+    deleteRuleModal.addEventListener('show.bs.modal', function(event) {
+        var button = event.relatedTarget;
+        var ruleId = button.getAttribute('data-rule-id');
+        document.getElementById('deleteRuleId').value = ruleId;
+    });
+</script>
+}

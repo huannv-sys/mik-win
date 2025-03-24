@@ -1,0 +1,217 @@
+@model ConnectionSettings
+@{
+    ViewData["Title"] = "Cài đặt kết nối";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Cài đặt kết nối</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewContext.TempData.ContainsKey("SuccessMessage"))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @ViewContext.TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (ViewContext.TempData.ContainsKey("ErrorMessage"))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @ViewContext.TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (ViewContext.TempData.ContainsKey("WarningMessage"))
+                    {
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            @ViewContext.TempData["WarningMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="bi bi-info-circle-fill fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Trạng thái kết nối</h5>
+                                        @if (ViewBag.IsConnected != null && ViewBag.IsConnected)
+                                        {
+                                            <p class="mb-0">
+                                                <span class="text-success">
+                                                    <i class="bi bi-check-circle-fill"></i> Đã kết nối
+                                                </span> tới Router tại <strong>@Model.IpAddress</strong>
+                                            </p>
+                                        }
+                                        else
+                                        {
+                                            <p class="mb-0">
+                                                <span class="text-danger">
+                                                    <i class="bi bi-x-circle-fill"></i> Chưa kết nối
+                                                </span> tới Router
+                                            </p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" action="@Url.Action("Connect", "Home")">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="IpAddress" class="form-label">Địa chỉ IP</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                                        <input asp-for="IpAddress" class="form-control" placeholder="192.168.1.1" required />
+                                    </div>
+                                    <span asp-validation-for="IpAddress" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ConnectionMethod" class="form-label">Phương thức kết nối</label>
+                                    <select asp-for="ConnectionMethod" class="form-select">
+                                        <option value="API">API</option>
+                                        <option value="SSH">SSH</option>
+                                        <option value="SNMP">SNMP</option>
+                                    </select>
+                                    <span asp-validation-for="ConnectionMethod" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Username" class="form-label">Tên đăng nhập</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        <input asp-for="Username" class="form-control" placeholder="admin" required />
+                                    </div>
+                                    <span asp-validation-for="Username" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Password" class="form-label">Mật khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                        <input asp-for="Password" type="password" class="form-control" required />
+                                        <button class="btn btn-outline-secondary toggle-password" type="button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Port" class="form-label">Port</label>
+                                    <input asp-for="Port" class="form-control" />
+                                    <span asp-validation-for="Port" class="text-danger"></span>
+                                    <small class="form-text text-muted">Mặc định: 22 (SSH)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="ApiPort" class="form-label">API Port</label>
+                                    <input asp-for="ApiPort" class="form-control" />
+                                    <span asp-validation-for="ApiPort" class="text-danger"></span>
+                                    <small class="form-text text-muted">Mặc định: 8728</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input asp-for="UseHttps" class="form-check-input" />
+                                    <label asp-for="UseHttps" class="form-check-label">Sử dụng HTTPS</label>
+                                </div>
+                                <div class="form-check">
+                                    <input asp-for="RememberCredentials" class="form-check-input" />
+                                    <label asp-for="RememberCredentials" class="form-check-label">Nhớ thông tin đăng nhập</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-between">
+                                @if (ViewBag.IsConnected != null && ViewBag.IsConnected)
+                                {
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-link"></i> Kết nối lại
+                                    </button>
+                                    <form method="post" action="@Url.Action("Disconnect", "Home")" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger">
+                                            <i class="bi bi-link-break"></i> Ngắt kết nối
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-link"></i> Kết nối
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('.toggle-password').on('click', function() {
+                var passwordField = $(this).closest('.input-group').find('input');
+                var icon = $(this).find('i');
+                
+                if (passwordField.attr('type') === 'password') {
+                    passwordField.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    passwordField.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+            
+            // Show/hide appropriate fields based on connection method
+            $('#ConnectionMethod').on('change', function() {
+                var method = $(this).val();
+                
+                if (method === 'API') {
+                    $('#ApiPort').closest('.form-group').show();
+                    $('#UseHttps').closest('.form-check').show();
+                } else if (method === 'SSH') {
+                    $('#ApiPort').closest('.form-group').hide();
+                    $('#UseHttps').closest('.form-check').hide();
+                } else if (method === 'SNMP') {
+                    $('#ApiPort').closest('.form-group').hide();
+                    $('#UseHttps').closest('.form-check').hide();
+                }
+            });
+            
+            // Trigger change event on load
+            $('#ConnectionMethod').trigger('change');
+        });
+    </script>
+}

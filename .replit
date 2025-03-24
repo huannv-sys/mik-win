@@ -1,7 +1,19 @@
-modules = ["bash", "dotnet-8.0"]
+run = "bash run_web_app.sh"
+language = "dotnet"
+modules = ["dotnet-8.0"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-23_11"
+
+[env]
+DOTNET_ROOT = "/home/runner/${REPL_SLUG}/.config/dotnet"
+PATH = "${DOTNET_ROOT}:${PATH}"
+ASPNETCORE_ENVIRONMENT = "Development"
+
+[deployment]
+build = ["sh", "-c", "cd mikk-mmc-web && dotnet publish -c Release -o ../publish"]
+run = ["sh", "-c", "cd publish && dotnet mikk-mmc-web.dll --urls=http://0.0.0.0:5000"]
+deploymentTarget = "cloudrun"
 
 [workflows]
 runButton = "Project"
@@ -13,18 +25,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "bash_workflow"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Debug and Deploy Runner"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Ubuntu Console App"
+args = "Web App"
 
 [[workflows.workflow]]
-name = "bash_workflow"
+name = "Web App"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -35,35 +39,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash fix_and_deploy.sh"
-
-[[workflows.workflow]]
-name = "Debug and Deploy Runner"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash fix_and_deploy.sh"
-
-[[workflows.workflow]]
-name = "Ubuntu Console App"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash run_ubuntu_app.sh"
-
-[deployment]
-run = ["sh", "-c", "bash fix_and_deploy.sh"]
+args = "bash web_workflow.sh"
+waitForPort = 5000

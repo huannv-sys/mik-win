@@ -1,0 +1,8 @@
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.csproj.AssemblyReference.cache
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.AssemblyInfoInputs.cache
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.AssemblyInfo.cs
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.csproj.CoreCompileInputs.cache
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.MvcApplicationPartsAssemblyInfo.cache
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.RazorAssemblyInfo.cache
+/home/runner/workspace/mikk-mmc-web/obj/Debug/net8.0/mikk-mmc-web.RazorAssemblyInfo.cs
