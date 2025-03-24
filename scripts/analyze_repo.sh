@@ -5,11 +5,14 @@
 echo "========== Repository Analysis =========="
 echo "Analyzing repository structure and dependencies..."
 
-# Check if we're in the right directory
-if [ ! -d ".git" ]; then
-    echo "ERROR: This doesn't appear to be a git repository. Make sure you're in the mikk-mmc directory."
+# Check if mikk-mmc directory exists
+if [ ! -d "mikk-mmc" ]; then
+    echo "ERROR: mikk-mmc directory not found. Make sure you're in the right directory."
     exit 1
 fi
+
+# Change to mikk-mmc directory for analysis
+cd mikk-mmc
 
 # Detect language and frameworks
 echo -e "\n----- Detecting Technology Stack -----"
@@ -146,6 +149,44 @@ echo -e "\n----- Potential Issues -----"
 missing_deps=0
 syntax_errors=0
 config_issues=0
+
+# Look for potential .NET issues
+if ls *.csproj &> /dev/null; then
+    echo "Checking .NET project..."
+    
+    # Check if obj and bin directories exist (indicates a built project)
+    if [ ! -d "obj" ] || [ ! -d "bin" ]; then
+        echo "  - Project doesn't appear to be built yet"
+        config_issues=$((config_issues+1))
+    fi
+    
+    # Check for potential syntax errors in C# files
+    for file in $(find . -name "*.cs"); do
+        if grep -q "<<<<<<< HEAD" "$file" || grep -q ">>>>>>>" "$file"; then
+            echo "  - Git merge conflict markers found in $file"
+            syntax_errors=$((syntax_errors+1))
+        fi
+    done
+    
+    # Check for XAML errors
+    for file in $(find . -name "*.xaml"); do
+        if grep -q "<<<<<<< HEAD" "$file" || grep -q ">>>>>>>" "$file"; then
+            echo "  - Git merge conflict markers found in $file"
+            syntax_errors=$((syntax_errors+1))
+        fi
+    done
+    
+    # Parse the project file for missing dependencies
+    if [ -f "*.csproj" ]; then
+        missing_packages=$(grep -o 'PackageReference Include="[^"]*" Version="[^"]*"' *.csproj | wc -l)
+        if [ $missing_packages -eq 0 ]; then
+            echo "  - No package references found in .csproj file"
+            missing_deps=$((missing_deps+1))
+        else
+            echo "  - Found $missing_packages package references"
+        fi
+    fi
+fi
 
 # Look for potential Python issues
 if ls *.py &> /dev/null; then

@@ -5,11 +5,14 @@
 echo "========== Fixing Common Issues =========="
 echo "Attempting to fix common issues in the repository..."
 
-# Check if we're in the right directory
-if [ ! -d ".git" ]; then
-    echo "ERROR: This doesn't appear to be a git repository. Make sure you're in the mikk-mmc directory."
+# Check if mikk-mmc directory exists
+if [ ! -d "mikk-mmc" ]; then
+    echo "ERROR: mikk-mmc directory not found. Make sure you're in the right directory."
     exit 1
 fi
+
+# Change to mikk-mmc directory for fixes
+cd mikk-mmc
 
 # Counter for fixed issues
 fixed_issues=0
@@ -148,6 +151,36 @@ if [ -f "manage.py" ]; then
 fi
 
 echo -e "\n----- Fixing code issues -----"
+
+# Fix README.md git merge conflicts
+if [ -f "README.md" ]; then
+    if grep -q "<<<<<<< HEAD" README.md || grep -q ">>>>>>>" README.md; then
+        echo "Fixing git merge conflicts in README.md..."
+        sed -i '/<<<<<<< HEAD/,/>>>>>>>/d' README.md
+        echo "# MikroTik Monitor (mikk-mmc)" > README.md
+        echo "" >> README.md
+        echo "Một ứng dụng giám sát toàn diện cho các bộ định tuyến MikroTik." >> README.md
+        log_fix "Fixed git merge conflicts in README.md"
+    fi
+fi
+
+# Check and fix C# files for merge conflicts
+for file in $(find . -name "*.cs"); do
+    if grep -q "<<<<<<< HEAD" "$file" || grep -q ">>>>>>>" "$file"; then
+        echo "Fixing git merge conflicts in $file..."
+        sed -i '/<<<<<<< HEAD/,/>>>>>>>/d' "$file"
+        log_fix "Fixed git merge conflicts in $file"
+    fi
+done
+
+# Check and fix XAML files for merge conflicts
+for file in $(find . -name "*.xaml"); do
+    if grep -q "<<<<<<< HEAD" "$file" || grep -q ">>>>>>>" "$file"; then
+        echo "Fixing git merge conflicts in $file..."
+        sed -i '/<<<<<<< HEAD/,/>>>>>>>/d' "$file"
+        log_fix "Fixed git merge conflicts in $file"
+    fi
+done
 
 # Fix common Python syntax errors
 for file in $(find . -name "*.py"); do

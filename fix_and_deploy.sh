@@ -32,34 +32,39 @@ fi
 
 # Step 2: Analyze the repository
 echo -e "\n${BOLD}Analyzing Repository Structure...${NC}"
-../scripts/analyze_repo.sh > ../logs/repo_analysis.log
+cd ..
+bash scripts/analyze_repo.sh > logs/repo_analysis.log
 if [ $? -ne 0 ]; then
     echo -e "${RED}Repository analysis failed. See logs/repo_analysis.log for details.${NC}"
 else
     echo -e "${GREEN}Repository analysis complete. Results saved to logs/repo_analysis.log${NC}"
-    cat ../logs/repo_analysis.log
+    cat logs/repo_analysis.log
 fi
+cd mikk-mmc
 
 # Step 3: Detect and fix common issues
 echo -e "\n${BOLD}Checking for Common Issues...${NC}"
-../scripts/fix_common_issues.sh > ../logs/fix_issues.log
+cd ..
+bash scripts/fix_common_issues.sh > logs/fix_issues.log
 if [ $? -ne 0 ]; then
     echo -e "${RED}Some issues could not be fixed automatically. See logs/fix_issues.log for details.${NC}"
 else
     echo -e "${GREEN}Fixed common issues. Results saved to logs/fix_issues.log${NC}"
-    cat ../logs/fix_issues.log
+    cat logs/fix_issues.log
 fi
+cd mikk-mmc
 
 # Step 4: Deploy the application
 echo -e "\n${BOLD}Deploying Application...${NC}"
 cd ..
-./scripts/deploy_ubuntu.sh > ./logs/deployment.log
+bash scripts/deploy_ubuntu.sh > logs/deployment.log
 if [ $? -ne 0 ]; then
     echo -e "${RED}Deployment failed. See logs/deployment.log for details.${NC}"
 else
     echo -e "${GREEN}Deployment completed successfully. Results saved to logs/deployment.log${NC}"
-    cat ./logs/deployment.log
+    cat logs/deployment.log
 fi
+cd mikk-mmc
 
 echo -e "\n${BOLD}Process Complete${NC}"
 echo "Please check the logs directory for detailed information about each step."

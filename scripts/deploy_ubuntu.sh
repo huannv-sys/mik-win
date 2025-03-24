@@ -17,9 +17,9 @@ else
     echo "WARNING: This doesn't appear to be Ubuntu. The deployment might not work as expected."
 fi
 
-# Check if we're in the right directory structure
+# Check if mikk-mmc directory exists
 if [ ! -d "mikk-mmc" ]; then
-    echo "ERROR: mikk-mmc directory not found. Make sure you're in the parent directory."
+    echo "ERROR: mikk-mmc directory not found. Make sure you're in the right directory."
     exit 1
 fi
 
@@ -32,6 +32,13 @@ echo "Deploying from: $APP_DIR"
 # Function to detect application type and deploy accordingly
 deploy_application() {
     echo -e "\n----- Detecting Application Type -----"
+    
+    # Check if it's a .NET WPF application
+    if ls *.csproj &> /dev/null; then
+        echo "Detected .NET application"
+        deploy_dotnet
+        return
+    fi
     
     # Check if it's a Django application
     if [ -f "manage.py" ]; then
@@ -469,6 +476,64 @@ EOL
     
     echo -e "\n----- PHP Deployment Complete -----"
     echo "Your application should now be running at http://localhost"
+}
+
+# Function to deploy .NET application
+deploy_dotnet() {
+    echo -e "\n----- Deploying .NET Application -----"
+    
+    # Instead of installing packages, we'll use the already installed .NET SDK in Replit
+    
+    # Build the application
+    echo "Building .NET application..."
+    
+    # If we have specific project file, use it
+    if [ -f "MikroTikMonitor.csproj" ]; then
+        echo "Found main project file: MikroTikMonitor.csproj"
+        dotnet restore MikroTikMonitor.csproj
+        dotnet build MikroTikMonitor.csproj -c Release
+        dotnet publish MikroTikMonitor.csproj -c Release -o ./publish
+    elif [ -f "MikroTikMonitor.sln" ]; then
+        echo "Found solution file: MikroTikMonitor.sln"
+        dotnet restore MikroTikMonitor.sln
+        dotnet build MikroTikMonitor.sln -c Release
+        dotnet publish MikroTikMonitor.sln -c Release -o ./publish
+    else
+        echo "Using first found project file"
+        PROJECT_FILE=$(ls *.csproj | head -1)
+        if [ -z "$PROJECT_FILE" ]; then
+            echo "No .csproj file found. Cannot build."
+            return 1
+        fi
+        echo "Using project file: $PROJECT_FILE"
+        dotnet restore "$PROJECT_FILE"
+        dotnet build "$PROJECT_FILE" -c Release
+        dotnet publish "$PROJECT_FILE" -c Release -o ./publish
+    fi
+    
+    # Get the project name from the .csproj file
+    PROJECT_NAME=$(ls *.csproj | head -1 | sed 's/\.csproj//')
+    
+    echo "Setting up systemd service..."
+    
+    # In Replit, we can't use systemd or Nginx, so we'll create a run script instead
+    cat > ../run_dotnet_app.sh <<EOL
+#!/bin/bash
+# Run the .NET application
+cd mikk-mmc/publish
+dotnet $PROJECT_NAME.dll
+EOL
+    
+    chmod +x ../run_dotnet_app.sh
+    
+    echo "Desktop application detected."
+    echo "For desktop applications, you can run it with:"
+    echo "bash run_dotnet_app.sh"
+    
+    echo -e "\n----- .NET Deployment Complete -----"
+    echo "Your desktop application has been built and published."
+    echo "You can find the built application in: $APP_DIR/publish/"
+    echo "Run it using: bash run_dotnet_app.sh"
 }
 
 # Start the deployment process
